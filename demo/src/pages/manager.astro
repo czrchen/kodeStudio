@@ -1,0 +1,203 @@
+---
+import App from '../layouts/App.astro';
+import Icon from '../components/Icon.astro';
+import { company, rm } from '../lib/company';
+import { q } from '../lib/db';
+import { demoSession, isPresenter } from '../lib/session';
+import { sheetsConfigured, sheetUrl } from '../lib/sheets';
+
+const session = demoSession(Astro.cookies);
+const presenter = isPresenter(Astro.cookies);
+const syncOn = presenter && sheetsConfigured();
+
+const claims = await q(
+  `SELECT *, to_char(receipt_date, 'DD Mon YYYY') AS receipt_day FROM demo_claims
+   WHERE session = $1 ORDER BY (status = 'pending') DESC, created_at DESC LIMIT 50`,
+  [session],
+);
+const pending = claims.filter((c) => c.status === 'pending');
+const decided = claims.filter((c) => c.status !== 'pending');
+const total = (list: any[]) => list.reduce((s, c) => s + Number(c.amount), 0);
+const ago = (d: string) => {
+  const m = Math.round((Date.now() - new Date(d).getTime()) / 60000);
+  return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+};
+---
+<App title="Approve claims" active="manager" wide>
+  <div class="head">
+    <div>
+      <h1>Claims to approve</h1>
+      <p class="sub">{company.manager} · {company.name}</p>
+    </div>
+    {syncOn ? (
+      <a class="sheet on" href={sheetUrl()} target="_blank" rel="noopener"><Icon name="table" size={16} /> Open Google Sheet</a>
+    ) : (
+      <span class="sheet" title="Sign in as presenter to sync approvals to Google Sheets"><Icon name="table" size={16} /> Sheet sync: presenter only</span>
+    )}
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><span>Waiting for you</span><strong>{pending.length}</strong></div>
+    <div class="tile"><span>Pending amount</span><strong>{rm(total(pending))}</strong></div>
+    <div class="tile"><span>Approved</span><strong>{rm(total(decided.filter((c) => c.status === 'approved')))}</strong></div>
+  </div>
+
+  {pending.length === 0 ? (
+    <div class="empty">
+      <Icon name="inbox" size={28} />
+      <p><strong>No claims waiting.</strong> Switch to the staff view and submit one.</p>
+      <a class="btn btn-dark btn-sm" href="/submit"><Icon name="camera" size={16} /> Submit a claim</a>
+    </div>
+  ) : (
+    <div class="cards">
+      {pending.map((c) => (
+        <article class="card" data-claim={c.id}>
+          {c.image && (
+            <a class="thumb" href={c.image} target="_blank" rel="noopener" aria-label="Open receipt photo">
+              <img src={c.image} alt={`Receipt from ${c.merchant}`} loading="lazy" />
+            </a>
+          )}
+          <div class="info">
+            <div class="top">
+              <div>
+                <strong class="merchant">{c.merchant}</strong>
+                <span class="meta">{c.staff} · {c.department} · {ago(c.created_at)}</span>
+              </div>
+              <span class="amount">{rm(c.amount)}</span>
+            </div>
+            <dl>
+              <div><dt>Category</dt><dd>{c.category}</dd></div>
+              <div><dt>Receipt date</dt><dd>{c.receipt_day ?? '—'}</dd></div>
+              <div><dt>SST</dt><dd>{c.sst === null ? '—' : rm(c.sst)}</dd></div>
+              <div><dt>Claim</dt><dd>#{c.id}</dd></div>
+            </dl>
+            {c.description && <p class="desc">{c.description}</p>}
+            {c.flags.length > 0 ? (
+              <ul class="flags">{c.flags.map((f: string) => <li><Icon name="alert" size={14} />{f}</li>)}</ul>
+            ) : (
+              <p class="clean"><Icon name="check" size={14} /> Passed all policy checks</p>
+            )}
+            <div class="actions">
+              <button class="btn btn-ghost btn-sm" data-decide="rejected">Reject</button>
+              <button class="btn btn-primary btn-sm" data-decide="approved"><Icon name="check" size={16} /> Approve</button>
+            </div>
+            <p class="result" data-result hidden></p>
+          </div>
+        </article>
+      ))}
+    </div>
+  )}
+
+  {decided.length > 0 && (
+    <section class="history">
+      <h2>Decided</h2>
+      <ul>
+        {decided.map((c) => (
+          <li>
+            <span><strong>{c.merchant}</strong><small>{c.staff} · #{c.id}</small></span>
+            <span class="amt">{rm(c.amount)}</span>
+            <span class={`st st-${c.status}`}>{c.status}</span>
+            {c.synced && <span class="synced" title="Added to Google Sheet"><Icon name="table" size={14} /></span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+</App>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-decide]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const card = btn.closest<HTMLElement>('[data-claim]')!;
+      const result = card.querySelector<HTMLElement>('[data-result]')!;
+      card.querySelectorAll<HTMLButtonElement>('[data-decide]').forEach((b) => (b.disabled = true));
+      try {
+        const res = await fetch('/api/decide', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: Number(card.dataset.claim), decision: btn.dataset.decide }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+        card.classList.add(data.status);
+        result.textContent =
+          data.status === 'rejected'
+            ? 'Rejected · staff notified'
+            : data.sync === 'synced'
+              ? '✓ Approved · added to Google Sheet'
+              : data.sync === 'failed'
+                ? '✓ Approved · Google Sheet sync failed (check server logs)'
+                : '✓ Approved · in a live setup this goes straight to your claims sheet';
+        result.hidden = false;
+        card.querySelector<HTMLElement>('.actions')!.hidden = true;
+        setTimeout(() => location.reload(), 2200);
+      } catch (err) {
+        result.textContent = (err as Error).message;
+        result.hidden = false;
+        card.querySelectorAll<HTMLButtonElement>('[data-decide]').forEach((b) => (b.disabled = false));
+      }
+    });
+  });
+</script>
+
+<style>
+  .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  h1 { font-size: clamp(26px, 5vw, 32px); letter-spacing: -0.03em; }
+  .sub { color: var(--ink-3); font-size: 14px; margin-top: 4px; }
+  .sheet { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 550; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-3); background: #fff; }
+  .sheet.on { color: #0b7a3e; border-color: #b7e4c7; background: #ecfbf1; }
+
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+  .tile { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; }
+  .tile span { font-size: 12.5px; color: var(--ink-3); }
+  .tile strong { font-size: 22px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+
+  .empty { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 48px 16px; background: #fff; border: 1px dashed var(--line-strong); border-radius: 16px; color: var(--ink-2); }
+  .empty :global(svg) { color: var(--ink-3); }
+
+  .cards { display: grid; gap: 14px; }
+  .card { display: grid; grid-template-columns: 120px 1fr; gap: 18px; padding: 16px; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-sm); transition: opacity 0.3s, border-color 0.3s; }
+  .card.approved { border-color: #8ce0b8; }
+  .card.rejected { opacity: 0.6; }
+  .thumb { display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--bg-soft); align-self: start; }
+  .thumb img { width: 100%; height: 160px; object-fit: cover; }
+  .top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .top > div { display: flex; flex-direction: column; min-width: 0; }
+  .merchant { font-size: 17px; }
+  .meta { font-size: 13px; color: var(--ink-3); }
+  .amount { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  dl { display: grid; grid-template-columns: repeat(4, auto); justify-content: start; gap: 4px 24px; margin: 12px 0 0; }
+  dt { font-size: 11.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+  dd { margin: 0; font-size: 14px; }
+  .desc { margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+  .flags { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .flags li { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 550; color: #a14f00; background: #fff4e6; border: 1px solid #ffd8a8; padding: 4px 10px; border-radius: 999px; }
+  .clean { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 13px; font-weight: 550; color: #087f5b; }
+  .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .actions .btn { min-width: 110px; }
+  .result { margin-top: 14px; font-size: 14px; font-weight: 600; color: #087f5b; text-align: right; }
+  .card.rejected .result { color: var(--ink-3); }
+
+  .history { margin-top: 36px; }
+  .history h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); margin-bottom: 10px; }
+  .history ul { list-style: none; padding: 0; margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+  .history li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .history li + li { border-top: 1px solid var(--line); }
+  .history li > span:first-child { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .history strong { font-size: 14.5px; }
+  .history small { font-size: 12.5px; color: var(--ink-3); }
+  .amt { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 14.5px; }
+  .st { font-size: 12px; font-weight: 600; text-transform: capitalize; padding: 3px 9px; border-radius: 999px; }
+  .st-approved { background: var(--accent-soft); color: #087f5b; }
+  .st-rejected { background: #f1f3f5; color: var(--ink-3); }
+  .synced { color: #0b7a3e; }
+
+  @media (max-width: 640px) {
+    .tiles { grid-template-columns: 1fr 1fr; }
+    .tiles .tile:last-child { grid-column: 1 / -1; }
+    .card { grid-template-columns: 1fr; }
+    .thumb img { height: 140px; }
+    dl { grid-template-columns: repeat(2, auto); }
+    .actions .btn { flex: 1; }
+  }
+</style>

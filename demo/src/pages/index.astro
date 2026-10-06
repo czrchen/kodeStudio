@@ -1,0 +1,66 @@
+---
+import App from '../layouts/App.astro';
+import Icon from '../components/Icon.astro';
+import { company } from '../lib/company';
+
+const steps = [
+  { icon: 'camera', title: 'Staff snap the receipt', text: 'From their phone, in seconds. No forms, no Excel.' },
+  { icon: 'sparkles', title: 'AI reads it', text: 'Merchant, date, amount, SST and category are filled in automatically.' },
+  { icon: 'shield', title: 'Rules check it', text: 'Over-limit, duplicate and old receipts are flagged before anyone approves.' },
+  { icon: 'check', title: 'Manager approves in one tap', text: `${company.manager.split(' (')[0]} sees everything in one list.` },
+  { icon: 'table', title: 'Lands in Google Sheets', text: 'Approved claims flow straight into the claims sheet for payroll.' },
+];
+---
+<App title="Expense claims">
+  <section class="hero">
+    <span class="eyebrow">Live demo · Expense claims</span>
+    <h1>From receipt to approved claim in under a minute.</h1>
+    <p>This is how staff at <strong>{company.name}</strong> (a fictional company) claim expenses after we automated it. Try both sides.</p>
+  </section>
+
+  <div class="roles">
+    <a href="/submit" class="role primary">
+      <span class="ic"><Icon name="camera" size={22} /></span>
+      <span><strong>I'm staff</strong><small>Submit a claim with a receipt photo</small></span>
+      <Icon name="arrow" size={18} />
+    </a>
+    <a href="/manager" class="role">
+      <span class="ic"><Icon name="shield" size={22} /></span>
+      <span><strong>I'm the manager</strong><small>Review and approve claims</small></span>
+      <Icon name="arrow" size={18} />
+    </a>
+  </div>
+
+  <ol class="flow">
+    {steps.map((s, i) => (
+      <li>
+        <span class="node"><Icon name={s.icon} size={18} /></span>
+        <div><strong>{i + 1}. {s.title}</strong><p>{s.text}</p></div>
+      </li>
+    ))}
+  </ol>
+
+  <p class="tip"><Icon name="receipt" size={16} /> No receipt nearby? Take a photo of any shop receipt, petrol slip or Grab e-receipt screenshot.</p>
+</App>
+
+<style>
+  .hero h1 { font-size: clamp(28px, 7vw, 36px); letter-spacing: -0.03em; }
+  .hero p { margin-top: 12px; color: var(--ink-2); font-size: 16px; }
+  .roles { display: grid; gap: 12px; margin-top: 24px; }
+  .role { display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-sm); transition: border-color 0.15s, transform 0.15s; }
+  .role:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+  .role > span:nth-child(2) { flex: 1; display: flex; flex-direction: column; }
+  .role small { color: var(--ink-3); font-size: 14px; }
+  .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); flex-shrink: 0; }
+  .role.primary { background: var(--bg-ink); color: #fff; border-color: var(--bg-ink); }
+  .role.primary small { color: #a9b0aa; }
+  .role.primary .ic { background: var(--signal); color: var(--bg-ink); }
+  .flow { list-style: none; padding: 0; margin: 32px 0 0; display: grid; gap: 0; }
+  .flow li { position: relative; display: flex; gap: 14px; padding-bottom: 18px; }
+  .flow li:not(:last-child)::before { content: ''; position: absolute; left: 17px; top: 38px; bottom: 2px; width: 2px; background: var(--line); }
+  .node { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: #fff; border: 1px solid var(--line); color: var(--brand); flex-shrink: 0; }
+  .flow strong { font-size: 15px; }
+  .flow p { font-size: 14px; color: var(--ink-2); margin-top: 2px; }
+  .tip { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; padding: 12px 14px; background: #fff; border: 1px dashed var(--line-strong); border-radius: 12px; font-size: 14px; color: var(--ink-2); }
+  .tip :global(svg) { flex-shrink: 0; margin-top: 3px; color: var(--ink-3); }
+</style>

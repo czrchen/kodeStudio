@@ -1,0 +1,323 @@
+---
+import App from '../layouts/App.astro';
+import Icon from '../components/Icon.astro';
+import { categories, rm, staff } from '../lib/company';
+import { q } from '../lib/db';
+import { demoSession } from '../lib/session';
+
+const session = demoSession(Astro.cookies);
+const mine = await q(
+  `SELECT id, staff, merchant, amount, status, created_at FROM demo_claims WHERE session = $1 ORDER BY created_at DESC LIMIT 5`,
+  [session],
+);
+---
+<App title="Submit a claim" active="staff">
+  <div data-app>
+    <!-- Step 1: who + photo -->
+    <section data-step="capture">
+      <h1>New expense claim</h1>
+      <p class="sub">Snap the receipt — the AI fills in the rest.</p>
+
+      <h2 class="label">Who's claiming?</h2>
+      <div class="people" role="radiogroup" aria-label="Staff member">
+        {staff.map((s, i) => (
+          <label class="person">
+            <input type="radio" name="staff" value={s.name} checked={i === 0} />
+            <span class="avatar">{s.initials}</span>
+            <span class="pname">{s.short}<small>{s.department}</small></span>
+          </label>
+        ))}
+      </div>
+
+      <label class="snap">
+        <input type="file" accept="image/*" capture="environment" data-file hidden />
+        <span class="snap-ic"><Icon name="camera" size={30} /></span>
+        <strong>Take photo of receipt</strong>
+        <small>or choose from your gallery</small>
+      </label>
+      <div class="form-msg error" data-capture-msg hidden></div>
+    </section>
+
+    <!-- Step 2: AI reading -->
+    <section data-step="reading" hidden>
+      <div class="reading">
+        <div class="preview"><img data-preview alt="Receipt preview" /><div class="scan"></div></div>
+        <p class="reading-text"><Icon name="sparkles" size={18} /> <span data-reading-text>AI is reading the receipt…</span></p>
+      </div>
+    </section>
+
+    <!-- Step 3: review -->
+    <form data-step="review" hidden novalidate>
+      <div class="review-head">
+        <img data-thumb alt="Receipt" />
+        <div>
+          <span class="ai-badge"><Icon name="sparkles" size={14} /> Filled in by AI</span>
+          <p>Check the details, then submit. <span data-confidence></span></p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="f-merchant">Merchant</label>
+        <input class="input" id="f-merchant" name="merchant" required />
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="f-amount">Total (RM)</label>
+          <input class="input big" id="f-amount" name="amount" inputmode="decimal" required />
+        </div>
+        <div class="field">
+          <label for="f-date">Receipt date</label>
+          <input class="input" id="f-date" name="date" type="date" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="f-category">Category</label>
+          <select class="input" id="f-category" name="category">
+            {Object.entries(categories).map(([c, limit]) => <option value={c}>{c} (limit {rm(limit)})</option>)}
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-sst">SST (RM) <span class="opt">if any</span></label>
+          <input class="input" id="f-sst" name="sst" inputmode="decimal" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-desc">Description</label>
+        <input class="input" id="f-desc" name="description" />
+      </div>
+      <div class="field">
+        <label for="f-no">Receipt no. <span class="opt">optional</span></label>
+        <input class="input" id="f-no" name="receipt_no" />
+      </div>
+
+      <div class="form-msg error" data-review-msg hidden></div>
+      <button class="btn btn-primary submit" type="submit">Submit claim</button>
+      <button class="btn btn-ghost" type="button" data-retake>Retake photo</button>
+    </form>
+
+    <!-- Step 4: done -->
+    <section data-step="done" hidden>
+      <div class="done">
+        <span class="done-ic"><Icon name="check" size={28} /></span>
+        <h1>Claim submitted</h1>
+        <p class="sub" data-done-summary></p>
+        <div class="flags" data-flags hidden>
+          <h3><Icon name="alert" size={16} /> Flagged for the manager</h3>
+          <ul data-flag-list></ul>
+        </div>
+        <p class="next">In a real setup, the manager now gets a WhatsApp or email alert.</p>
+        <a class="btn btn-dark" href="/manager">Switch to manager view <Icon name="arrow" size={16} /></a>
+        <button class="btn btn-ghost" type="button" data-again>Submit another claim</button>
+      </div>
+    </section>
+  </div>
+
+  {mine.length > 0 && (
+    <section class="recent">
+      <h2 class="label">Your recent claims</h2>
+      <ul>
+        {mine.map((c) => (
+          <li>
+            <span><strong>{c.merchant}</strong><small>{c.staff} · #{c.id}</small></span>
+            <span class="amt">{rm(c.amount)}</span>
+            <span class={`st st-${c.status}`}>{c.status}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+</App>
+
+<script>
+  const $ = <T extends Element = HTMLElement>(s: string) => document.querySelector<T>(s)!;
+  const steps = ['capture', 'reading', 'review', 'done'] as const;
+  const show = (name: (typeof steps)[number]) => {
+    steps.forEach((s) => ($(`[data-step=${s}]`).hidden = s !== name));
+    window.scrollTo({ top: 0 });
+  };
+  const form = $<HTMLFormElement>('[data-step=review]');
+  const fileInput = $<HTMLInputElement>('[data-file]');
+  const captureMsg = $('[data-capture-msg]');
+  const reviewMsg = $('[data-review-msg]');
+
+  let image = '';
+  let ai: Record<string, any> = {};
+
+  const error = (el: HTMLElement, text: string) => {
+    el.textContent = text;
+    el.hidden = false;
+  };
+
+  // Shrink the photo on the phone before upload: faster, cheaper, and enough for the AI.
+  async function toJpeg(file: File, max = 1600): Promise<string> {
+    const bitmap = await createImageBitmap(file).catch(() => null);
+    const source: CanvasImageSource & { width: number; height: number } =
+      bitmap ??
+      (await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('Could not open that image. Please try a JPG or PNG photo.'));
+        img.src = URL.createObjectURL(file);
+      }));
+    const scale = Math.min(1, max / Math.max(source.width, source.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(source.width * scale);
+    canvas.height = Math.round(source.height * scale);
+    canvas.getContext('2d')!.drawImage(source, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.82);
+  }
+
+  const messages = ['AI is reading the receipt…', 'Finding the total and SST…', 'Checking the date and merchant…', 'Choosing a category…'];
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = '';
+    if (!file) return;
+    captureMsg.hidden = true;
+    try {
+      image = await toJpeg(file);
+    } catch (err) {
+      return error(captureMsg, (err as Error).message);
+    }
+    $<HTMLImageElement>('[data-preview]').src = image;
+    show('reading');
+    let i = 0;
+    const ticker = setInterval(() => ($('[data-reading-text]').textContent = messages[++i % messages.length]), 1400);
+    try {
+      const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+      ai = data.result;
+      fillReview();
+      show('review');
+    } catch (err) {
+      show('capture');
+      error(captureMsg, (err as Error).message);
+    } finally {
+      clearInterval(ticker);
+    }
+  });
+
+  function fillReview() {
+    const set = (name: string, v: unknown) => ((form.elements.namedItem(name) as HTMLInputElement).value = v == null ? '' : String(v));
+    set('merchant', ai.merchant);
+    set('amount', ai.total != null ? Number(ai.total).toFixed(2) : '');
+    set('date', ai.date);
+    set('category', ai.category);
+    set('sst', ai.sst != null ? Number(ai.sst).toFixed(2) : '');
+    set('description', ai.description);
+    set('receipt_no', ai.receipt_no);
+    $<HTMLImageElement>('[data-thumb]').src = image;
+    $('[data-confidence]').textContent = ai.confidence === 'low' ? 'The AI was unsure about some fields.' : '';
+    reviewMsg.hidden = true;
+  }
+
+  $('[data-retake]').addEventListener('click', () => {
+    show('capture');
+    fileInput.click();
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+    const fields = Object.fromEntries(new FormData(form));
+    const staffName = $<HTMLInputElement>('input[name=staff]:checked').value;
+    try {
+      const res = await fetch('/api/claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...fields, staff: staffName, image, ai_amount: ai.total, confidence: ai.confidence }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Could not submit. Please try again.');
+      $('[data-done-summary]').textContent = `Claim #${data.id} · RM ${Number(fields.amount).toFixed(2)} at ${fields.merchant} · sent to the manager for approval.`;
+      const list = $('[data-flag-list]');
+      list.innerHTML = '';
+      (data.flags as string[]).forEach((f) => {
+        const li = document.createElement('li');
+        li.textContent = f;
+        list.appendChild(li);
+      });
+      $('[data-flags]').hidden = data.flags.length === 0;
+      show('done');
+    } catch (err) {
+      error(reviewMsg, (err as Error).message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit claim';
+    }
+  });
+
+  $('[data-again]').addEventListener('click', () => location.reload());
+</script>
+
+<style>
+  h1 { font-size: clamp(26px, 6vw, 32px); letter-spacing: -0.03em; }
+  .sub { margin-top: 6px; color: var(--ink-2); }
+  .label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); margin: 24px 0 10px; }
+
+  .people { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .person { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 4px; background: #fff; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; text-align: center; }
+  .person input { position: absolute; opacity: 0; pointer-events: none; }
+  .person:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); }
+  .person:has(input:focus-visible) { outline: 2px solid var(--brand); outline-offset: 2px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--bg-soft); font-size: 14px; font-weight: 700; color: var(--ink-2); }
+  .person:has(input:checked) .avatar { background: var(--brand); color: #fff; }
+  .pname { display: flex; flex-direction: column; font-size: 14px; font-weight: 600; line-height: 1.2; }
+  .pname small { font-size: 11.5px; font-weight: 500; color: var(--ink-3); margin-top: 2px; }
+
+  .snap { margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 36px 16px; background: var(--bg-ink); color: #fff; border-radius: 20px; cursor: pointer; text-align: center; transition: transform 0.15s; }
+  .snap:active { transform: scale(0.99); }
+  .snap-ic { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: var(--signal); color: var(--bg-ink); margin-bottom: 10px; }
+  .snap strong { font-size: 18px; }
+  .snap small { color: #a9b0aa; font-size: 14px; }
+  [data-capture-msg] { margin-top: 12px; }
+
+  .reading { display: flex; flex-direction: column; align-items: center; gap: 20px; padding-top: 12px; }
+  .preview { position: relative; width: min(280px, 80vw); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-lg); background: #fff; }
+  .preview img { width: 100%; max-height: 420px; object-fit: contain; }
+  .scan { position: absolute; left: 0; right: 0; height: 60px; top: -60px; background: linear-gradient(to bottom, transparent, rgba(49, 86, 232, 0.35), transparent); animation: scan 1.6s ease-in-out infinite; }
+  @keyframes scan { to { top: 100%; } }
+  .reading-text { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--brand); }
+
+  form { display: grid; gap: 16px; }
+  .review-head { display: flex; gap: 14px; align-items: center; padding: 12px; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+  .review-head img { width: 64px; height: 84px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0; }
+  .review-head p { font-size: 14px; color: var(--ink-2); margin-top: 6px; }
+  .ai-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--brand-ink); background: var(--brand-soft); padding: 4px 10px; border-radius: 999px; }
+  [data-confidence] { color: #c25e00; font-weight: 550; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .input { background: #fff; }
+  .input.big { font-size: 20px; font-weight: 700; }
+  .opt { font-weight: 400; color: var(--ink-3); }
+  .submit { height: 50px; font-size: 16px; }
+
+  .done { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding-top: 16px; }
+  .done-ic { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; box-shadow: 0 0 0 8px var(--accent-soft); margin-bottom: 8px; }
+  .flags { width: 100%; text-align: left; padding: 14px 16px; background: #fff8eb; border: 1px solid #ffd8a8; border-radius: 14px; }
+  .flags h3 { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #a14f00; }
+  .flags ul { margin: 8px 0 0; padding-left: 20px; font-size: 14px; color: #6b3a00; display: grid; gap: 4px; }
+  .next { font-size: 14px; color: var(--ink-3); }
+  .done .btn { width: 100%; height: 48px; }
+
+  .recent { margin-top: 40px; }
+  .recent ul { list-style: none; padding: 0; margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+  .recent li { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .recent li + li { border-top: 1px solid var(--line); }
+  .recent li > span:first-child { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .recent strong { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .recent small { font-size: 12.5px; color: var(--ink-3); }
+  .amt { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 14.5px; }
+  .st { font-size: 12px; font-weight: 600; text-transform: capitalize; padding: 3px 9px; border-radius: 999px; }
+  .st-pending { background: #fff4e6; color: #c25e00; }
+  .st-approved { background: var(--accent-soft); color: #087f5b; }
+  .st-rejected { background: #f1f3f5; color: var(--ink-3); }
+
+  @media (max-width: 400px) {
+    .row { grid-template-columns: 1fr; }
+  }
+</style>

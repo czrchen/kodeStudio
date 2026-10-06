@@ -1,0 +1,65 @@
+---
+import App from '../layouts/App.astro';
+import { checkPresenterPassword, endPresenter, isPresenter, presenterConfigured, startPresenter } from '../lib/session';
+import { sheetsConfigured, sheetUrl } from '../lib/sheets';
+import { geminiConfigured } from '../lib/gemini';
+
+let error = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  if (form.get('action') === 'logout') {
+    endPresenter(Astro.cookies);
+    return Astro.redirect('/presenter');
+  }
+  if (checkPresenterPassword(String(form.get('password') ?? ''))) {
+    startPresenter(Astro.cookies);
+    return Astro.redirect('/presenter');
+  }
+  await new Promise((r) => setTimeout(r, 600));
+  error = presenterConfigured() ? 'Incorrect password.' : 'Presenter mode is not configured (set PRESENTER_PASSWORD and SESSION_SECRET).';
+}
+const on = isPresenter(Astro.cookies);
+const checks = [
+  { label: 'AI receipt reader (Gemini)', ok: geminiConfigured() },
+  { label: 'Google Sheet sync', ok: sheetsConfigured() },
+  { label: 'Presenter mode', ok: on },
+];
+---
+<App title="Presenter">
+  <h1>Presenter mode</h1>
+  <p class="sub">For KodeStudio only. When on, approved claims are added to the live Google Sheet so you can show it in meetings.</p>
+
+  <ul class="checks">
+    {checks.map((c) => <li class:list={{ ok: c.ok }}><span>{c.ok ? '●' : '○'}</span>{c.label}<em>{c.ok ? 'Ready' : 'Off'}</em></li>)}
+  </ul>
+
+  {on ? (
+    <form method="post" class="card">
+      {sheetUrl() && <a class="btn btn-dark" href={sheetUrl()} target="_blank" rel="noopener">Open Google Sheet</a>}
+      <a class="btn btn-ghost" href="/">Start the demo</a>
+      <button class="btn btn-ghost" name="action" value="logout">Turn off presenter mode</button>
+    </form>
+  ) : (
+    <form method="post" class="card">
+      <div class="field">
+        <label for="pw">Presenter password</label>
+        <input class="input" id="pw" name="password" type="password" required autocomplete="current-password" />
+      </div>
+      {error && <div class="form-msg error">{error}</div>}
+      <button class="btn btn-primary">Turn on</button>
+    </form>
+  )}
+</App>
+<style>
+  h1 { font-size: 28px; letter-spacing: -0.03em; }
+  .sub { margin-top: 8px; color: var(--ink-2); }
+  .checks { list-style: none; padding: 0; margin: 20px 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+  .checks li { display: flex; gap: 10px; align-items: center; padding: 12px 14px; font-size: 15px; }
+  .checks li + li { border-top: 1px solid var(--line); }
+  .checks span { color: var(--ink-3); }
+  .checks li.ok span { color: var(--accent); }
+  .checks em { margin-left: auto; font-style: normal; font-size: 13px; color: var(--ink-3); }
+  .checks li.ok em { color: #087f5b; font-weight: 600; }
+  .card { display: grid; gap: 12px; padding: 20px; background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+  .card .btn { height: 46px; }
+</style>
