@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "start": "node ./dist/server/entry.mjs",
     "preview": "astro preview",
     "db:setup": "node scripts/db-setup.mjs"
   },
   "dependencies": {
-    "@astrojs/vercel": "^11.0.11",
+    "@astrojs/node": "^11.1.6",
     "@neon/config": "^1.8.4",
     "@neon/env": "^1.5.1",
     "@neondatabase/serverless": "^1.2.0",

@@ -1,11 +1,16 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
-import vercel from '@astrojs/vercel';
+import node from '@astrojs/node';
 
 export default defineConfig({
-  site: 'https://kodestudio.my',
+  site: 'https://kodestudio.klyihao.com',
   output: 'server',
-  adapter: vercel(),
+  adapter: node({ mode: 'standalone' }),
+  security: {
+    allowedDomains: [
+      { hostname: 'kodestudio.klyihao.com', protocol: 'https' },
+    ],
+  },
   env: {
     schema: {
       DATABASE_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
