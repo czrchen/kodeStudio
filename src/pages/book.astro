@@ -95,6 +95,7 @@ const days = await availability();
           <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off" /></label></div>
           <div class="form-msg" data-msg hidden></div>
           <button class="btn btn-primary submit" type="submit">Confirm booking</button>
+          <p class="fine">By booking, you agree to our <a href="/privacy">Privacy Notice</a>.</p>
         </form>
 
         <div class="done" data-step="done" hidden>
@@ -243,6 +244,8 @@ const days = await availability();
   .chosen div { display: flex; flex-direction: column; color: var(--ink); }
   .chosen span { font-size: 14px; color: var(--ink-2); }
   .submit { height: 48px; }
+  .fine { margin-top: -6px; font-size: 13px; color: var(--ink-3); text-align: center; }
+  .fine a { text-decoration: underline; text-underline-offset: 2px; }
 
   .done { text-align: center; padding: 24px 0; }
   .done-icon { width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; box-shadow: 0 0 0 8px var(--accent-soft); }

@@ -2,10 +2,13 @@
 import Base from '../../layouts/Base.astro';
 import Logo from '../../components/Logo.astro';
 import Icon from '../../components/Icon.astro';
+import Traffic from '../../components/admin/Traffic.astro';
 import { q } from '../../lib/db';
 import { formatDate, formatTime } from '../../lib/slots';
 
-const tab = Astro.url.searchParams.get('tab') === 'bookings' ? 'bookings' : 'enquiries';
+const tabParam = Astro.url.searchParams.get('tab');
+const tab = tabParam === 'bookings' || tabParam === 'traffic' ? tabParam : 'enquiries';
+const listTab = tab === 'traffic' ? 'enquiries' : tab;
 const filter = Astro.url.searchParams.get('status') ?? 'all';
 
 const STATUSES = {
@@ -27,10 +30,10 @@ const [enquiries, bookings, [stats]] = await Promise.all([
        (SELECT count(*) FROM enquiries WHERE status = 'won')::int AS won`),
 ]);
 
-const rows = (tab === 'enquiries' ? enquiries : bookings).filter((r) => filter === 'all' || r.status === filter);
+const rows = (listTab === 'enquiries' ? enquiries : bookings).filter((r) => filter === 'all' || r.status === filter);
 const counts = (list: any[]) =>
-  Object.fromEntries(['all', ...STATUSES[tab]].map((s) => [s, s === 'all' ? list.length : list.filter((r) => r.status === s).length]));
-const statusCounts = counts(tab === 'enquiries' ? enquiries : bookings);
+  Object.fromEntries(['all', ...STATUSES[listTab]].map((s) => [s, s === 'all' ? list.length : list.filter((r) => r.status === s).length]));
+const statusCounts = counts(listTab === 'enquiries' ? enquiries : bookings);
 
 const waLink = (phone: string | null) => {
   if (!phone) return null;
@@ -69,11 +72,14 @@ const href = (t: string, s = 'all') => `/admin?tab=${t}${s !== 'all' ? `&status=
       <div class="tabs">
         <a href={href('enquiries')} class:list={{ on: tab === 'enquiries' }}><Icon name="inbox" size={16} /> Enquiries <em>{enquiries.length}</em></a>
         <a href={href('bookings')} class:list={{ on: tab === 'bookings' }}><Icon name="calendar" size={16} /> Bookings <em>{bookings.length}</em></a>
+        <a href={href('traffic')} class:list={{ on: tab === 'traffic' }}><Icon name="chart" size={16} /> Traffic</a>
       </div>
 
+      {tab === 'traffic' ? <Traffic /> : (<>
+
       <div class="filters">
-        {['all', ...STATUSES[tab]].map((s) => (
-          <a href={href(tab, s)} class:list={['chip', { on: filter === s }]}>{s} <span>{statusCounts[s]}</span></a>
+        {['all', ...STATUSES[listTab]].map((s) => (
+          <a href={href(listTab, s)} class:list={['chip', { on: filter === s }]}>{s} <span>{statusCounts[s]}</span></a>
         ))}
       </div>
 
@@ -100,7 +106,7 @@ const href = (t: string, s = 'all') => `/admin?tab=${t}${s !== 'all' ? `&status=
                   <div class="when"><span>{ago(r.created_at)}</span></div>
                 )}
                 <select class={`status s-${r.status}`} data-status aria-label="Status">
-                  {STATUSES[tab].map((s) => <option selected={s === r.status}>{s}</option>)}
+                  {STATUSES[listTab].map((s) => <option selected={s === r.status}>{s}</option>)}
                 </select>
               </summary>
               <div class="body">
@@ -133,6 +139,7 @@ const href = (t: string, s = 'all') => `/admin?tab=${t}${s !== 'all' ? `&status=
           ))}
         </div>
       )}
+      </>)}
     </main>
   </div>
 </Base>

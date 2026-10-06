@@ -1,0 +1,167 @@
+---
+import { q } from '../../lib/db';
+
+const MY = `AT TIME ZONE 'Asia/Kuala_Lumpur'`;
+
+const [[totals], daily, pages, sources, devices, [leads]] = await Promise.all([
+  q(`SELECT
+       count(*) FILTER (WHERE (created_at ${MY})::date = (now() ${MY})::date)::int AS views_today,
+       count(DISTINCT visitor) FILTER (WHERE (created_at ${MY})::date = (now() ${MY})::date)::int AS visitors_today,
+       count(*) FILTER (WHERE created_at > now() - interval '7 days')::int AS views_7d,
+       count(DISTINCT visitor) FILTER (WHERE created_at > now() - interval '7 days')::int AS visitors_7d,
+       count(*)::int AS views_30d,
+       count(DISTINCT visitor)::int AS visitors_30d
+     FROM page_views WHERE created_at > now() - interval '30 days'`),
+  q(`SELECT to_char(d, 'YYYY-MM-DD') AS day,
+            count(DISTINCT pv.visitor)::int AS visitors,
+            count(pv.id)::int AS views
+     FROM generate_series((now() ${MY})::date - 29, (now() ${MY})::date, interval '1 day') AS d
+     LEFT JOIN page_views pv ON (pv.created_at ${MY})::date = d::date
+     GROUP BY d ORDER BY d`),
+  q(`SELECT path AS label, count(*)::int AS n FROM page_views
+     WHERE created_at > now() - interval '30 days' GROUP BY path ORDER BY n DESC LIMIT 8`),
+  q(`SELECT coalesce(source, 'Direct / WhatsApp') AS label, count(DISTINCT visitor)::int AS n FROM page_views
+     WHERE created_at > now() - interval '30 days' GROUP BY 1 ORDER BY n DESC LIMIT 8`),
+  q(`SELECT coalesce(device, 'unknown') AS label, count(DISTINCT visitor)::int AS n FROM page_views
+     WHERE created_at > now() - interval '30 days' GROUP BY 1 ORDER BY n DESC`),
+  q(`SELECT
+       (SELECT count(*) FROM enquiries WHERE created_at > now() - interval '30 days')::int
+     + (SELECT count(*) FROM bookings WHERE created_at > now() - interval '30 days')::int AS n`),
+]);
+
+const max = Math.max(1, ...daily.map((d) => d.visitors));
+const conversion = totals.visitors_30d ? ((leads.n / totals.visitors_30d) * 100).toFixed(1) : '0.0';
+const dayLabel = (iso: string) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+const pageName = (p: string) => ({ '/': 'Home', '/book': 'Book a call', '/privacy': 'Privacy notice' })[p] ?? p;
+type Ranked = { label: string; n: number };
+const lists: { title: string; unit: string; rows: Ranked[] }[] = [
+  { title: 'Top pages', unit: 'views', rows: pages.map((r) => ({ label: pageName(r.label), n: r.n })) },
+  { title: 'Where visitors come from', unit: 'visitors', rows: sources as Ranked[] },
+  { title: 'Devices', unit: 'visitors', rows: devices as Ranked[] },
+];
+---
+
+<section class="traffic">
+  <div class="tiles">
+    <div class="tile"><span>Visitors today</span><strong>{totals.visitors_today}</strong><small>{totals.views_today} page views</small></div>
+    <div class="tile"><span>Visitors · 7 days</span><strong>{totals.visitors_7d}</strong><small>{totals.views_7d} page views</small></div>
+    <div class="tile"><span>Visitors · 30 days</span><strong>{totals.visitors_30d}</strong><small>{totals.views_30d} page views</small></div>
+    <div class="tile"><span>Lead conversion · 30 days</span><strong>{conversion}%</strong><small>{leads.n} lead{leads.n === 1 ? '' : 's'} (enquiries + bookings)</small></div>
+  </div>
+
+  <figure class="card chart-card">
+    <figcaption>
+      <h3>Daily visitors</h3>
+      <span>Last 30 days · Malaysia time</span>
+    </figcaption>
+    <div class="chart" role="img" aria-label={`Daily unique visitors over the last 30 days. Peak ${max} visitors in a day; ${totals.visitors_30d} unique visitors in total.`}>
+      <div class="grid-line top"><span>{max}</span></div>
+      <div class="grid-line mid"><span>{Math.round(max / 2)}</span></div>
+      <div class="bars">
+        {daily.map((d) => (
+          <div class="col" tabindex="0" data-tip={`${dayLabel(d.day)}: ${d.visitors} visitor${d.visitors === 1 ? '' : 's'}, ${d.views} view${d.views === 1 ? '' : 's'}`}>
+            <div class="bar" style={`height:${(d.visitors / max) * 100}%`}></div>
+          </div>
+        ))}
+      </div>
+      <div class="baseline"></div>
+      <div class="tip" data-tip-box hidden></div>
+    </div>
+    <div class="x-axis">
+      <span>{dayLabel(daily[0].day)}</span>
+      <span>{dayLabel(daily[14].day)}</span>
+      <span>Today</span>
+    </div>
+  </figure>
+
+  <div class="lists">
+    {lists.map((l) => {
+      const top = Math.max(1, ...l.rows.map((r) => r.n));
+      return (
+        <div class="card">
+          <h3>{l.title}</h3>
+          {l.rows.length === 0 ? (
+            <p class="none">No data yet.</p>
+          ) : (
+            <ul>
+              {l.rows.map((r) => (
+                <li>
+                  <div class="row-bar" style={`width:${(r.n / top) * 100}%`}></div>
+                  <span class="label">{r.label}</span>
+                  <span class="n">{r.n}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p class="unit">by {l.unit}, last 30 days</p>
+        </div>
+      );
+    })}
+  </div>
+
+  <p class="foot">Cookie-free and private: visitors are counted with a daily-rotating anonymous code, and your own visits while signed in are not counted. Add <code>?utm_source=linkedin</code> (or facebook, flyer…) to links you share to see which channel brings visitors.</p>
+</section>
+
+<script>
+  const box = document.querySelector<HTMLElement>('[data-tip-box]');
+  const chart = box?.parentElement;
+  document.querySelectorAll<HTMLElement>('[data-tip]').forEach((col) => {
+    const show = () => {
+      if (!box || !chart) return;
+      box.textContent = col.dataset.tip!;
+      box.hidden = false;
+      const c = chart.getBoundingClientRect();
+      const r = col.getBoundingClientRect();
+      const x = Math.min(Math.max(r.left - c.left + r.width / 2, 80), c.width - 80);
+      box.style.left = `${x}px`;
+    };
+    const hide = () => box && (box.hidden = true);
+    col.addEventListener('mouseenter', show);
+    col.addEventListener('focus', show);
+    col.addEventListener('mouseleave', hide);
+    col.addEventListener('blur', hide);
+  });
+</script>
+
+<style>
+  .traffic { display: grid; gap: 16px; margin-top: 24px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .tile, .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .tile { display: flex; flex-direction: column; gap: 2px; }
+  .tile span, .tile small { font-size: 13px; color: var(--ink-3); }
+  .tile strong { font-size: 28px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  h3 { font-size: 15px; font-weight: 600; }
+
+  .chart-card { margin: 0; }
+  figcaption { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  figcaption span { font-size: 13px; color: var(--ink-3); }
+  .chart { position: relative; height: 180px; padding-left: 28px; }
+  .grid-line { position: absolute; left: 28px; right: 0; border-top: 1px dashed var(--line); }
+  .grid-line.top { top: 0; }
+  .grid-line.mid { top: 50%; }
+  .grid-line span { position: absolute; left: -28px; top: -9px; width: 22px; text-align: right; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .bars { position: absolute; inset: 0 0 0 28px; display: flex; align-items: flex-end; gap: 2px; }
+  .col { flex: 1; height: 100%; display: flex; align-items: flex-end; cursor: default; outline: none; }
+  .bar { width: 100%; min-height: 0; background: var(--brand); border-radius: 4px 4px 0 0; transition: opacity 0.15s; }
+  .bars:hover .bar, .bars:focus-within .bar { opacity: 0.45; }
+  .col:hover .bar, .col:focus .bar { opacity: 1; }
+  .baseline { position: absolute; left: 28px; right: 0; bottom: 0; border-top: 1px solid var(--line-strong); }
+  .tip { position: absolute; top: -8px; transform: translate(-50%, -100%); background: var(--ink); color: #fff; font-size: 12.5px; padding: 6px 10px; border-radius: 8px; white-space: nowrap; pointer-events: none; z-index: 2; }
+  .x-axis { display: flex; justify-content: space-between; margin: 8px 0 0 28px; font-size: 12px; color: var(--ink-3); }
+
+  .lists { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .lists ul { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 6px; }
+  .lists li { position: relative; display: flex; justify-content: space-between; gap: 12px; padding: 6px 10px; font-size: 14px; border-radius: 6px; overflow: hidden; }
+  .row-bar { position: absolute; inset: 0 auto 0 0; background: var(--brand-soft); border-radius: 6px; z-index: 0; }
+  .label, .n { position: relative; z-index: 1; }
+  .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: none; }
+  .n { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .none { margin-top: 14px; font-size: 14px; color: var(--ink-3); }
+  .unit { margin-top: 10px; font-size: 12px; color: var(--ink-3); }
+  .foot { font-size: 13px; color: var(--ink-3); line-height: 1.6; }
+  .foot code { font-family: var(--mono); font-size: 12px; background: var(--bg-soft); padding: 1px 5px; border-radius: 4px; }
+
+  @media (max-width: 900px) { .lists { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, 1fr); } }
+</style>

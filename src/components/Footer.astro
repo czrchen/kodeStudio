@@ -25,7 +25,7 @@ const year = new Date().getFullYear();
   </div>
   <div class="container bottom">
     <span>© {year} {site.name}. All rights reserved.</span>
-    <span>Made in {site.location}</span>
+    <span><a href="/privacy">Privacy Notice</a> · Made in {site.location}</span>
   </div>
 </footer>
 <style>
@@ -36,5 +36,6 @@ const year = new Date().getFullYear();
   .grid a { display: block; padding: 4px 0; overflow-wrap: anywhere; }
   .grid a:hover { color: #fff; }
   .bottom { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 56px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 14px; color: #7a849a; }
+  .bottom a:hover { color: #fff; }
   @media (max-width: 760px) { .grid { grid-template-columns: 1fr; gap: 32px; } }
 </style>

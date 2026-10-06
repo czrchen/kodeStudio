@@ -32,6 +32,15 @@ CREATE TABLE IF NOT EXISTS bookings (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS bookings_active_slot
   ON bookings (slot_start) WHERE status <> 'cancelled';
+CREATE TABLE IF NOT EXISTS page_views (
+  id          BIGSERIAL PRIMARY KEY,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  path        TEXT NOT NULL,
+  source      TEXT,
+  visitor     TEXT,
+  device      TEXT
+);
+CREATE INDEX IF NOT EXISTS page_views_created ON page_views (created_at);
 `;
 
 let ready: Promise<QueryFn> | undefined;
