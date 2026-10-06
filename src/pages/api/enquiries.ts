@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
+import { site } from '../../config';
 import { q } from '../../lib/db';
+import { lines, notifyOwner } from '../../lib/notify';
 import { clean, isEmail, json } from '../../lib/validate';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -24,6 +26,19 @@ export const POST: APIRoute = async ({ request }) => {
     `INSERT INTO enquiries (name, company, email, phone, industry, team_size, message)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [data.name, data.company, data.email, data.phone, data.industry, data.team_size, data.message],
+  );
+  void notifyOwner(
+    lines(
+      '📩 *New enquiry* — KodeStudio',
+      `*${data.name}*${data.company ? ` · ${data.company}` : ''}`,
+      (data.industry || data.team_size) && [data.industry, data.team_size && `${data.team_size} staff`].filter(Boolean).join(' · '),
+      `✉️ ${data.email}`,
+      data.phone && `📞 ${data.phone}`,
+      '',
+      data.message.slice(0, 600),
+      '',
+      `${site.url}/admin`,
+    ),
   );
   return json({ ok: true });
 };

@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
+import { site } from '../../config';
 import { q } from '../../lib/db';
-import { isOfferedSlot } from '../../lib/slots';
+import { lines, notifyOwner } from '../../lib/notify';
+import { formatDate, formatTime, isOfferedSlot } from '../../lib/slots';
 import { clean, isEmail, isPhone, json } from '../../lib/validate';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -33,5 +35,19 @@ export const POST: APIRoute = async ({ request }) => {
     if (err?.code === '23505') return json({ error: 'Someone just booked that slot. Please pick another time.' }, 409);
     throw err;
   }
+  void notifyOwner(
+    lines(
+      '📅 *New call booked* — KodeStudio',
+      `*${formatDate(slot)}, ${formatTime(slot)}*`,
+      '',
+      `*${data.name}*${data.company ? ` · ${data.company}` : ''}`,
+      data.industry,
+      `📞 ${data.phone}`,
+      `✉️ ${data.email}`,
+      data.topic && `\n${data.topic.slice(0, 600)}`,
+      '',
+      `${site.url}/admin?tab=bookings`,
+    ),
+  );
   return json({ ok: true });
 };

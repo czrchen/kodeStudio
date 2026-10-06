@@ -16,6 +16,8 @@ export default defineConfig({
       DATABASE_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
       ADMIN_PASSWORD: envField.string({ context: 'server', access: 'secret', optional: true }),
       SESSION_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      CALLMEBOT_APIKEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      CALLMEBOT_PHONE: envField.string({ context: 'server', access: 'secret', optional: true }),
     },
   },
 });

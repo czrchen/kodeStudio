@@ -8,6 +8,7 @@ export const site = {
   whatsapp: '60176262550', // international format, no "+" or spaces
   email: 'kodestudio7@protonmail.com',
   location: 'Malaysia',
+  url: 'https://kodestudio.klyihao.com',
 };
 
 export const whatsappLink = (text = "Hi KodeStudio, I'd like to know more about automating my business.") =>

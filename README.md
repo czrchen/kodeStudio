@@ -31,3 +31,13 @@ Page copy (headlines, services, FAQ) is in `src/pages/index.astro`.
    - `SESSION_SECRET` — a long random string (`openssl rand -hex 32`)
 3. Run `npm ci && npm run build`, then start the server with `npm start`.
 4. Proxy `kodestudio.klyihao.com` to the Node process through Nginx. Tables are created automatically on first request.
+
+## WhatsApp alerts
+
+New enquiries and bookings send a WhatsApp message to you via [CallMeBot](https://www.callmebot.com/blog/free-api-whatsapp-messages/).
+
+1. Save **+34 694 25 79 72** in your phone contacts.
+2. WhatsApp that number: `I allow callmebot to send me messages` — it replies with your API key.
+3. Set `CALLMEBOT_APIKEY` (and optionally `CALLMEBOT_PHONE`, defaults to the site's WhatsApp number) in your server environment and restart.
+
+If alerts don't arrive, check the server logs for lines starting with `[notify]`. Leaving `CALLMEBOT_APIKEY` empty turns alerts off.
