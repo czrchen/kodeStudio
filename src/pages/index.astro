@@ -8,7 +8,7 @@ import { industries, pricing, site, whatsappLink } from '../config';
 
 export const prerender = true;
 
-const tools = ['WhatsApp', 'Google Sheets', 'Excel', 'Gmail', 'Outlook', 'Google Drive', 'Lark', 'Telegram', 'Notion', 'Shopify', 'AI / ChatGPT'];
+const tools = ['WhatsApp Business', 'Google Sheets', 'Excel / Microsoft 365', 'Gmail', 'Google Drive', 'Lark', 'Telegram bots', 'Notion', 'Shopify', 'AI APIs'];
 
 const pains = [
   { icon: 'message', title: 'Approvals lost in WhatsApp', text: 'Leave, claims and purchase requests buried in group chats, with no record of who approved what.' },
@@ -117,8 +117,9 @@ const faqs = [
     <!-- Tools -->
     <section class="tools">
       <div class="container">
-        <p>Works with the tools your team already uses</p>
+        <p class="tools-kicker">Common tools we automate with</p>
         <ul>{tools.map((t) => <li>{t}</li>)}</ul>
+        <p class="tools-note">Every setup is different. We confirm API availability, plan requirements and admin permissions before you approve a quote.</p>
       </div>
     </section>
 
@@ -558,10 +559,11 @@ const faqs = [
   /* Tools */
   .tools { padding: 4px 0 76px; overflow: hidden; }
   .tools .container { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding-top: 18px; padding-bottom: 18px; }
-  .tools p { text-align: center; font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
+  .tools-kicker { text-align: center; font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-3); }
   .tools ul { list-style: none; padding: 0; margin: 15px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 0; }
   .tools li { display: inline-flex; align-items: center; font-size: 15px; font-weight: 550; color: var(--ink-2); }
   .tools li:not(:last-child)::after { content: '•'; color: var(--brand); margin: 0 14px; }
+  .tools-note { max-width: 720px; margin: 14px auto 0; text-align: center; font-size: 12px; line-height: 1.55; color: var(--ink-3); }
 
   /* Shared */
   .icon-box { width: 40px; height: 40px; border-radius: 10px; display: inline-grid; place-items: center; background: var(--bg-soft); color: var(--ink-2); border: 1px solid var(--line); flex-shrink: 0; }
