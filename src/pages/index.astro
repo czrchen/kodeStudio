@@ -587,16 +587,16 @@ const faqs = [
 
   /* Services */
   .service-grid { display: grid; grid-template-columns: repeat(2, 1fr); border-top: 1px solid var(--line-strong); }
-  .service { position: relative; background: transparent; border-bottom: 1px solid var(--line-strong); padding: 34px 34px 34px 0; transition: background 0.2s, padding 0.2s; }
+  .service { position: relative; background: transparent; border-bottom: 1px solid var(--line-strong); padding: 34px; transition: background 0.2s; }
   .service:nth-child(odd) { border-right: 1px solid var(--line-strong); }
-  .service:nth-child(even) { padding-left: 34px; }
-  .service:hover { background: rgba(255,255,255,0.65); }
-  .service .icon-box { border-radius: 50%; background: #fff; }
+  .service:hover { background: rgba(255,255,255,0.28); }
+  .service .icon-box { border-radius: 50%; background: #fff; transition: transform 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+  .service:hover .icon-box { transform: translateY(-2px); color: var(--brand); border-color: #bfcaff; }
   .service h3 { margin-top: 20px; }
   .service ul { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
   .service li { display: flex; gap: 10px; font-size: 15px; color: var(--ink-2); line-height: 1.45; }
   .service li :global(svg) { color: var(--accent); margin-top: 2px; flex-shrink: 0; }
-  @media (max-width: 620px) { .service-grid { grid-template-columns: 1fr; } .service:nth-child(odd) { border-right: 0; } .service:nth-child(even) { padding-left: 0; } }
+  @media (max-width: 620px) { .service-grid { grid-template-columns: 1fr; } .service:nth-child(odd) { border-right: 0; } }
 
   /* Interactive industry workflow */
   .industry-lab { background: #121513; color: #f5f6ef; overflow: hidden; }
