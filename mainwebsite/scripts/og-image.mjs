@@ -16,7 +16,7 @@ const svg = `
   <g transform="translate(80 80)">
     <rect width="56" height="56" rx="14" fill="#dfff56"/>
     <path d="M22 20l-10 12 10 12M38 20l10 12-10 12M33 17l-7 30" transform="translate(-2 -4)" fill="none" stroke="#121513" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="76" y="39" font-family="${font}" font-size="32" fill="#ffffff">Kode<tspan font-weight="700">Studio</tspan></text>
+    <text x="76" y="39" font-family="${font}" font-size="32" fill="#ffffff">Kode<tspan font-weight="700">SME</tspan></text>
   </g>
 
   <text x="80" y="300" font-family="${font}" font-size="76" font-weight="700" fill="#ffffff" letter-spacing="-2">Automate the busywork.</text>
@@ -33,7 +33,7 @@ const svg = `
     <rect x="582" y="520" width="168" height="44" rx="22" fill="none" stroke="#ffffff" stroke-opacity="0.25"/>
     <text x="666" y="549" text-anchor="middle">Reporting</text>
   </g>
-  <text x="1120" y="549" text-anchor="end" font-family="${font}" font-size="22" fill="#a9b0aa">kodestudio.klyihao.com</text>
+  <text x="1120" y="549" text-anchor="end" font-family="${font}" font-size="22" fill="#a9b0aa">kodesme.klyihao.com</text>
 </svg>`;
 
 await sharp(Buffer.from(svg)).png().toFile('public/og-image.png');

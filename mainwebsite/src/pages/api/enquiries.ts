@@ -29,7 +29,7 @@ export const POST: APIRoute = async ({ request }) => {
   );
   void notifyOwner(
     lines(
-      '📩 *New enquiry* — KodeStudio',
+      '📩 *New enquiry* — KodeSME',
       `*${data.name}*${data.company ? ` · ${data.company}` : ''}`,
       (data.industry || data.team_size) && [data.industry, data.team_size && `${data.team_size} staff`].filter(Boolean).join(' · '),
       `✉️ ${data.email}`,

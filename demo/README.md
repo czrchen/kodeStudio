@@ -1,4 +1,4 @@
-# KodeStudio — Expense claims demo
+# KodeSME — Expense claims demo
 
 A live demo to show prospects: staff snap a receipt → Gemini AI reads it → policy rules flag problems → the manager approves in one tap → the claim lands in Google Sheets.
 

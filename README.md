@@ -1,4 +1,4 @@
-# KodeStudio
+# KodeSME
 
 | Folder | What it is | Local dev |
 |---|---|---|

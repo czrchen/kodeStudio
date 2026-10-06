@@ -2,16 +2,16 @@
 // Edit this file to change what the website shows.
 
 export const site = {
-  name: 'KodeStudio',
+  name: 'KodeSME',
   tagline: 'Workflow automation for Malaysian SMEs',
   phoneDisplay: '017-626 2550',
   whatsapp: '60176262550', // international format, no "+" or spaces
   email: 'kodestudio7@protonmail.com',
   location: 'Malaysia',
-  url: 'https://kodestudio.klyihao.com',
+  url: 'https://kodesme.klyihao.com',
 };
 
-export const whatsappLink = (text = "Hi KodeStudio, I'd like to know more about automating my business.") =>
+export const whatsappLink = (text = "Hi KodeSME, I'd like to know more about automating my business.") =>
   `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(text)}`;
 
 export const pricing = {

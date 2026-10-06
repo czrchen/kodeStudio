@@ -7,7 +7,7 @@ interface Props {
   description?: string;
   noindex?: boolean;
 }
-const defaultDescription = 'KodeStudio builds custom workflow automation for Malaysian SMEs, including WhatsApp automation, Google Sheets, Excel, AI document processing and approval workflows.';
+const defaultDescription = 'KodeSME builds custom workflow automation for Malaysian SMEs, including WhatsApp automation, Google Sheets, Excel, AI document processing and approval workflows.';
 const {
   title = `Workflow Automation Malaysia for SMEs | ${site.name}`,
   description = defaultDescription,
@@ -22,7 +22,7 @@ const structuredData = {
       '@id': `${site.url}/#website`,
       url: site.url,
       name: site.name,
-      alternateName: 'Kode Studio',
+      alternateName: 'Kode SME',
       description: defaultDescription,
       inLanguage: 'en-MY',
     },
@@ -30,7 +30,7 @@ const structuredData = {
       '@type': 'Organization',
       '@id': `${site.url}/#organization`,
       name: site.name,
-      alternateName: 'Kode Studio',
+      alternateName: 'Kode SME',
       url: site.url,
       logo: `${site.url}/logo-512.png`,
       image: `${site.url}/og-image.png`,
@@ -85,7 +85,7 @@ const structuredData = {
     <meta property="og:image" content={new URL('/og-image.png', Astro.site)} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="KodeStudio workflow automation for Malaysian SMEs" />
+    <meta property="og:image:alt" content="KodeSME workflow automation for Malaysian SMEs" />
     <meta property="og:locale" content="en_MY" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />

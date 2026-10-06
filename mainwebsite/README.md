@@ -1,6 +1,6 @@
-# KodeStudio website
+# KodeSME website
 
-Landing page, call booking and admin portal for KodeStudio — built with Astro, deployed at [kodestudio.klyihao.com](https://kodestudio.klyihao.com), with data in Neon Postgres.
+Landing page, call booking and admin portal for KodeSME — built with Astro, deployed at [kodesme.klyihao.com](https://kodesme.klyihao.com), with data in Neon Postgres.
 
 | Page | What it does |
 |---|---|
@@ -30,7 +30,7 @@ Page copy (headlines, services, FAQ) is in `src/pages/index.astro`.
    - `ADMIN_PASSWORD` — a strong password for `/admin`
    - `SESSION_SECRET` — a long random string (`openssl rand -hex 32`)
 3. Run `npm ci && npm run build`, then start the server with `npm start`.
-4. Proxy `kodestudio.klyihao.com` to the Node process through Nginx. Tables are created automatically on first request.
+4. Proxy `kodesme.klyihao.com` to the Node process through Nginx. Tables are created automatically on first request.
 
 ## WhatsApp alerts
 

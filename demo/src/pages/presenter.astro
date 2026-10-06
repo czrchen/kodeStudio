@@ -27,7 +27,7 @@ const checks = [
 ---
 <App title="Presenter">
   <h1>Presenter mode</h1>
-  <p class="sub">For KodeStudio only. When on, approved claims are added to the live Google Sheet so you can show it in meetings.</p>
+  <p class="sub">For KodeSME only. When on, approved claims are added to the live Google Sheet so you can show it in meetings.</p>
 
   <ul class="checks">
     {checks.map((c) => <li class:list={{ ok: c.ok }}><span>{c.ok ? '●' : '○'}</span>{c.label}<em>{c.ok ? 'Ready' : 'Off'}</em></li>)}

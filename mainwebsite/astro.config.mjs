@@ -3,12 +3,12 @@ import { defineConfig, envField } from 'astro/config';
 import node from '@astrojs/node';
 
 export default defineConfig({
-  site: 'https://kodestudio.klyihao.com',
+  site: 'https://kodesme.klyihao.com',
   output: 'server',
   adapter: node({ mode: 'standalone' }),
   security: {
     allowedDomains: [
-      { hostname: 'kodestudio.klyihao.com', protocol: 'https' },
+      { hostname: 'kodesme.klyihao.com', protocol: 'https' },
     ],
   },
   env: {

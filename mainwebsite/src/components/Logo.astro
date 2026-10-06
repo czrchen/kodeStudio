@@ -2,12 +2,12 @@
 interface Props { light?: boolean }
 const { light = false } = Astro.props;
 ---
-<a href="/" class:list={['logo', { light }]} aria-label="KodeStudio home">
+<a href="/" class:list={['logo', { light }]} aria-label="KodeSME home">
   <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
     <rect width="32" height="32" rx="8" fill="#141715" />
     <path d="M11 10l-5 6 5 6M21 10l5 6-5 6M18 8.5l-4 15" fill="none" stroke="#dfff56" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
-  <span>Kode<strong>Studio</strong></span>
+  <span>Kode<strong>SME</strong></span>
 </a>
 <style>
   .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 18px; letter-spacing: -0.02em; color: var(--ink); font-weight: 500; }

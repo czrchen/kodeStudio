@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
-Sitemap: https://kodestudio.klyihao.com/sitemap.xml
+Sitemap: https://kodesme.klyihao.com/sitemap.xml

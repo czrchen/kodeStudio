@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
   void notifyOwner(
     lines(
-      '📅 *New call booked* — KodeStudio',
+      '📅 *New call booked* — KodeSME',
       `*${formatDate(slot)}, ${formatTime(slot)}*`,
       '',
       `*${data.name}*${data.company ? ` · ${data.company}` : ''}`,

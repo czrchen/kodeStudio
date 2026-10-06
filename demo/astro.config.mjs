@@ -5,6 +5,7 @@ import node from '@astrojs/node';
 const secret = (optional = true) => envField.string({ context: 'server', access: 'secret', optional });
 
 export default defineConfig({
+  site: 'https://kodesme-demo.klyihao.com',
   output: 'server',
   adapter: node({ mode: 'standalone' }),
   env: {
