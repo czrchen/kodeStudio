@@ -44,18 +44,31 @@ export const geminiConfigured = () => Boolean(GEMINI_API_KEY);
 
 export async function readReceipt(mimeType: string, base64: string): Promise<Extracted> {
   if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
-  const model = GEMINI_MODEL || 'gemini-3.8-flash';
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-    body: JSON.stringify({
-      contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: PROMPT }] }],
-      generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: SCHEMA },
-    }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!res.ok) throw new Error(`Gemini error ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const data = await res.json();
+  const models = [...new Set([GEMINI_MODEL || 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash'])];
+  let data: any;
+  let lastError = 'Gemini request failed';
+
+  for (const [index, model] of models.entries()) {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+      body: JSON.stringify({
+        contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: PROMPT }] }],
+        generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: SCHEMA },
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (res.ok) {
+      data = await res.json();
+      break;
+    }
+
+    lastError = `Gemini error ${res.status}: ${(await res.text()).slice(0, 300)}`;
+    const canRetry = [404, 429, 503].includes(res.status) && index < models.length - 1;
+    if (!canRetry) throw new Error(lastError);
+  }
+
+  if (!data) throw new Error(lastError);
   const text = data?.candidates?.[0]?.content?.parts?.find((p: any) => p.text)?.text;
   if (!text) throw new Error('Gemini returned no result');
   const out = JSON.parse(text) as Extracted;
