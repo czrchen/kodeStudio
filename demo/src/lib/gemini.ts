@@ -25,17 +25,17 @@ Extract the fields from this image. Rules:
 - confidence: how sure you are about total and date.`;
 
 const SCHEMA = {
-  type: 'OBJECT',
+  type: 'object',
   properties: {
-    is_receipt: { type: 'BOOLEAN' },
-    merchant: { type: 'STRING', nullable: true },
-    date: { type: 'STRING', nullable: true },
-    total: { type: 'NUMBER', nullable: true },
-    sst: { type: 'NUMBER', nullable: true },
-    receipt_no: { type: 'STRING', nullable: true },
-    category: { type: 'STRING', enum: Object.keys(categories) },
-    description: { type: 'STRING', nullable: true },
-    confidence: { type: 'STRING', enum: ['high', 'medium', 'low'] },
+    is_receipt: { type: 'boolean' },
+    merchant: { type: ['string', 'null'] },
+    date: { type: ['string', 'null'] },
+    total: { type: ['number', 'null'] },
+    sst: { type: ['number', 'null'] },
+    receipt_no: { type: ['string', 'null'] },
+    category: { type: 'string', enum: Object.keys(categories) },
+    description: { type: ['string', 'null'] },
+    confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
   },
   required: ['is_receipt', 'merchant', 'date', 'total', 'sst', 'receipt_no', 'category', 'description', 'confidence'],
 };
@@ -44,32 +44,43 @@ export const geminiConfigured = () => Boolean(GEMINI_API_KEY);
 
 export async function readReceipt(mimeType: string, base64: string): Promise<Extracted> {
   if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
-  const models = [...new Set([GEMINI_MODEL || 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash'])];
+  const preferred = GEMINI_MODEL || 'gemini-3.8-flash';
+  const models = [preferred, preferred, 'gemini-3.7-flash', 'gemini-3.5-flash'];
   let data: any;
   let lastError = 'Gemini request failed';
 
   for (const [index, model] of models.entries()) {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
-      body: JSON.stringify({
-        contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: PROMPT }] }],
-        generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: SCHEMA },
-      }),
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (res.ok) {
-      data = await res.json();
-      break;
-    }
+    try {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
+        body: JSON.stringify({
+          model,
+          input: [
+            { type: 'image', mime_type: mimeType, data: base64 },
+            { type: 'text', text: PROMPT },
+          ],
+          response_format: { type: 'text', mime_type: 'application/json', schema: SCHEMA },
+          generation_config: { thinking_level: 'low' },
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (res.ok) {
+        data = await res.json();
+        break;
+      }
 
-    lastError = `Gemini error ${res.status}: ${(await res.text()).slice(0, 300)}`;
-    const canRetry = [404, 429, 503].includes(res.status) && index < models.length - 1;
-    if (!canRetry) throw new Error(lastError);
+      lastError = `Gemini error ${res.status}: ${(await res.text()).slice(0, 300)}`;
+      if (![404, 429, 503].includes(res.status)) throw new Error(lastError);
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+    }
+    if (index < models.length - 1) await new Promise((resolve) => setTimeout(resolve, 500 * (index + 1)));
   }
 
   if (!data) throw new Error(lastError);
-  const text = data?.candidates?.[0]?.content?.parts?.find((p: any) => p.text)?.text;
+  const output = data?.steps?.findLast((step: any) => step.type === 'model_output');
+  const text = output?.content?.find((part: any) => part.type === 'text')?.text;
   if (!text) throw new Error('Gemini returned no result');
   const out = JSON.parse(text) as Extracted;
   if (!(out.category in categories)) out.category = 'Others';
