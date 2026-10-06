@@ -1,0 +1,256 @@
+---
+import Base from '../../layouts/Base.astro';
+import Logo from '../../components/Logo.astro';
+import Icon from '../../components/Icon.astro';
+import { q } from '../../lib/db';
+import { formatDate, formatTime } from '../../lib/slots';
+
+const tab = Astro.url.searchParams.get('tab') === 'bookings' ? 'bookings' : 'enquiries';
+const filter = Astro.url.searchParams.get('status') ?? 'all';
+
+const STATUSES = {
+  enquiries: ['new', 'contacted', 'proposal', 'won', 'lost'],
+  bookings: ['confirmed', 'completed', 'no-show', 'cancelled'],
+};
+
+const [enquiries, bookings, [stats]] = await Promise.all([
+  q(`SELECT * FROM enquiries ORDER BY created_at DESC LIMIT 500`),
+  q(`SELECT *, slot_start >= now() AS upcoming FROM bookings
+     ORDER BY (slot_start >= now()) DESC,
+              CASE WHEN slot_start >= now() THEN slot_start END ASC,
+              slot_start DESC
+     LIMIT 500`),
+  q(`SELECT
+       (SELECT count(*) FROM enquiries WHERE status = 'new')::int AS new_enquiries,
+       (SELECT count(*) FROM enquiries WHERE created_at > now() - interval '30 days')::int AS enquiries_30d,
+       (SELECT count(*) FROM bookings WHERE status = 'confirmed' AND slot_start >= now())::int AS upcoming,
+       (SELECT count(*) FROM enquiries WHERE status = 'won')::int AS won`),
+]);
+
+const rows = (tab === 'enquiries' ? enquiries : bookings).filter((r) => filter === 'all' || r.status === filter);
+const counts = (list: any[]) =>
+  Object.fromEntries(['all', ...STATUSES[tab]].map((s) => [s, s === 'all' ? list.length : list.filter((r) => r.status === s).length]));
+const statusCounts = counts(tab === 'enquiries' ? enquiries : bookings);
+
+const waLink = (phone: string | null) => {
+  if (!phone) return null;
+  let digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('0')) digits = `6${digits}`;
+  return digits.length >= 9 ? `https://wa.me/${digits}` : null;
+};
+const ago = (d: string) => {
+  const mins = Math.round((Date.now() - new Date(d).getTime()) / 60000);
+  if (mins < 60) return `${Math.max(mins, 1)}m ago`;
+  if (mins < 1440) return `${Math.round(mins / 60)}h ago`;
+  return new Date(d).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', timeZone: 'Asia/Kuala_Lumpur' });
+};
+const href = (t: string, s = 'all') => `/admin?tab=${t}${s !== 'all' ? `&status=${s}` : ''}`;
+---
+<Base title="Admin — KodeStudio" noindex>
+  <div class="shell">
+    <header class="top">
+      <div class="top-inner">
+        <Logo />
+        <span class="tag">Admin</span>
+        <div class="spacer"></div>
+        <a class="btn btn-ghost btn-sm" href="/" target="_blank"><Icon name="external" size={15} /> View site</a>
+        <form method="post" action="/admin/logout"><button class="btn btn-ghost btn-sm" type="submit"><Icon name="logout" size={15} /> Sign out</button></form>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="stats">
+        <div class="stat"><span>New enquiries</span><strong>{stats.new_enquiries}</strong></div>
+        <div class="stat"><span>Enquiries (30 days)</span><strong>{stats.enquiries_30d}</strong></div>
+        <div class="stat"><span>Upcoming calls</span><strong>{stats.upcoming}</strong></div>
+        <div class="stat"><span>Won clients</span><strong>{stats.won}</strong></div>
+      </div>
+
+      <div class="tabs">
+        <a href={href('enquiries')} class:list={{ on: tab === 'enquiries' }}><Icon name="inbox" size={16} /> Enquiries <em>{enquiries.length}</em></a>
+        <a href={href('bookings')} class:list={{ on: tab === 'bookings' }}><Icon name="calendar" size={16} /> Bookings <em>{bookings.length}</em></a>
+      </div>
+
+      <div class="filters">
+        {['all', ...STATUSES[tab]].map((s) => (
+          <a href={href(tab, s)} class:list={['chip', { on: filter === s }]}>{s} <span>{statusCounts[s]}</span></a>
+        ))}
+      </div>
+
+      {rows.length === 0 ? (
+        <div class="empty">
+          <Icon name={tab === 'enquiries' ? 'inbox' : 'calendar'} size={28} />
+          <p>No {tab} {filter !== 'all' ? `with status “${filter}”` : 'yet'}.</p>
+        </div>
+      ) : (
+        <div class="list">
+          {rows.map((r) => (
+            <details class:list={['item', { past: tab === 'bookings' && !r.upcoming }]} data-table={tab} data-id={r.id}>
+              <summary>
+                <div class="who">
+                  <strong>{r.name}</strong>
+                  <span>{[r.company, r.industry].filter(Boolean).join(' · ') || '—'}</span>
+                </div>
+                {tab === 'bookings' ? (
+                  <div class="when">
+                    <strong>{formatDate(r.slot_start)}</strong>
+                    <span>{formatTime(r.slot_start)}{r.upcoming ? '' : ' · past'}</span>
+                  </div>
+                ) : (
+                  <div class="when"><span>{ago(r.created_at)}</span></div>
+                )}
+                <select class={`status s-${r.status}`} data-status aria-label="Status">
+                  {STATUSES[tab].map((s) => <option selected={s === r.status}>{s}</option>)}
+                </select>
+              </summary>
+              <div class="body">
+                <dl>
+                  <div><dt>Email</dt><dd><a href={`mailto:${r.email}`}>{r.email}</a></dd></div>
+                  <div>
+                    <dt>Phone</dt>
+                    <dd>
+                      {r.phone || '—'}
+                      {waLink(r.phone) && <a class="wa" href={waLink(r.phone)} target="_blank" rel="noopener"><Icon name="whatsapp" size={14} /> WhatsApp</a>}
+                    </dd>
+                  </div>
+                  {tab === 'enquiries' && <div><dt>Team size</dt><dd>{r.team_size || '—'}</dd></div>}
+                  <div><dt>Received</dt><dd>{formatDate(r.created_at)}, {formatTime(r.created_at)}</dd></div>
+                </dl>
+                <div class="msg">
+                  <h4>{tab === 'enquiries' ? 'Message' : 'Topic'}</h4>
+                  <p>{(tab === 'enquiries' ? r.message : r.topic) || '—'}</p>
+                </div>
+                <div class="notes">
+                  <h4>Internal notes</h4>
+                  <textarea class="input" data-notes placeholder="Add notes — call summary, quote sent, next steps…">{r.notes ?? ''}</textarea>
+                  <div class="notes-bar">
+                    <span class="saved" data-saved></span>
+                    <button class="btn btn-dark btn-sm" type="button" data-save>Save notes</button>
+                  </div>
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
+      )}
+    </main>
+  </div>
+</Base>
+
+<script>
+  async function update(el: HTMLElement, patch: Record<string, string>) {
+    const item = el.closest<HTMLElement>('[data-id]')!;
+    const res = await fetch('/api/admin/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table: item.dataset.table, id: Number(item.dataset.id), ...patch }),
+    });
+    if (res.status === 401) location.href = '/admin/login';
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Update failed');
+  }
+
+  document.querySelectorAll<HTMLSelectElement>('[data-status]').forEach((sel) => {
+    sel.addEventListener('click', (e) => e.preventDefault()); // don't toggle <details>
+    let previous = sel.value;
+    sel.addEventListener('change', async () => {
+      try {
+        await update(sel, { status: sel.value });
+        sel.className = `status s-${sel.value}`;
+        previous = sel.value;
+      } catch (err) {
+        alert((err as Error).message);
+        sel.value = previous;
+      }
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('[data-save]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const box = btn.closest('.notes')!;
+      const saved = box.querySelector<HTMLElement>('[data-saved]')!;
+      btn.disabled = true;
+      try {
+        await update(btn, { notes: box.querySelector<HTMLTextAreaElement>('[data-notes]')!.value });
+        saved.textContent = 'Saved';
+        setTimeout(() => (saved.textContent = ''), 2000);
+      } catch (err) {
+        saved.textContent = (err as Error).message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+</script>
+
+<style>
+  .shell { min-height: 100vh; background: var(--bg-soft); }
+  .top { background: #fff; border-bottom: 1px solid var(--line); }
+  .top-inner, .main { max-width: 1100px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .top-inner { display: flex; align-items: center; gap: 12px; height: 64px; }
+  .tag { font-size: 12px; font-weight: 600; background: var(--brand-soft); color: var(--brand); padding: 3px 9px; border-radius: 999px; }
+  .spacer { flex: 1; }
+  .main { padding-top: 32px; padding-bottom: 64px; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .stat { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
+  .stat span { font-size: 13px; color: var(--ink-3); font-weight: 500; }
+  .stat strong { font-size: 28px; letter-spacing: -0.02em; }
+
+  .tabs { display: flex; gap: 4px; margin-top: 32px; border-bottom: 1px solid var(--line); }
+  .tabs a { display: inline-flex; align-items: center; gap: 8px; padding: 12px 14px; font-weight: 550; color: var(--ink-2); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs a.on { color: var(--ink); border-bottom-color: var(--brand); }
+  .tabs em { font-style: normal; font-size: 12px; background: var(--line); padding: 1px 7px; border-radius: 999px; }
+
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
+  .chip { font-size: 13px; font-weight: 550; text-transform: capitalize; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--ink-2); }
+  .chip span { color: var(--ink-3); margin-left: 4px; }
+  .chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .chip.on span { color: #aab3c5; }
+
+  .empty { text-align: center; padding: 64px 24px; background: #fff; border: 1px dashed var(--line-strong); border-radius: var(--radius); color: var(--ink-3); }
+  .empty :global(svg) { margin: 0 auto 10px; }
+
+  .list { display: grid; gap: 10px; }
+  .item { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
+  .item.past { opacity: 0.75; }
+  .item[open] { box-shadow: var(--shadow); }
+  summary { list-style: none; display: grid; grid-template-columns: 1fr auto 150px; gap: 20px; align-items: center; padding: 16px 20px; cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+  .who, .when { display: flex; flex-direction: column; min-width: 0; }
+  .who strong { font-size: 15px; }
+  .who span, .when span { font-size: 13px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .when { text-align: right; }
+  .when strong { font-size: 14px; }
+  .status { font: inherit; font-size: 13px; font-weight: 600; text-transform: capitalize; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: #fff; cursor: pointer; }
+  .s-new, .s-confirmed { background: var(--brand-soft); border-color: #c5d0ff; color: var(--brand-ink); }
+  .s-contacted, .s-proposal { background: #fff4e6; border-color: #ffd8a8; color: #c25e00; }
+  .s-won, .s-completed { background: var(--accent-soft); border-color: #b2f2d6; color: #087f5b; }
+  .s-lost, .s-cancelled, .s-no-show { background: #f1f3f5; color: var(--ink-3); }
+
+  .body { border-top: 1px solid var(--line); padding: 20px; display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px; }
+  dl { margin: 0; display: grid; gap: 12px; align-content: start; }
+  dt { font-size: 12px; color: var(--ink-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  dd { margin: 2px 0 0; font-size: 14.5px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; overflow-wrap: anywhere; }
+  dd a { color: var(--brand); }
+  .wa { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: #1faa52 !important; }
+  h4 { font-size: 12px; color: var(--ink-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .msg p { font-size: 14.5px; white-space: pre-wrap; color: var(--ink); }
+  .notes { grid-column: 1 / -1; }
+  .notes textarea { min-height: 90px; font-size: 14px; }
+  .notes-bar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 8px; }
+  .saved { font-size: 13px; color: #087f5b; }
+
+  @media (max-width: 760px) {
+    .top-inner, .main { padding-left: 16px; padding-right: 16px; }
+    .top-inner .btn { padding: 0 10px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    summary { grid-template-columns: 1fr auto; }
+    .when { grid-column: 1; grid-row: 2; text-align: left; }
+    .status { grid-row: 1 / span 2; grid-column: 2; }
+    .body { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .top-inner .btn { font-size: 0; gap: 0; width: 36px; padding: 0; }
+  }
+</style>

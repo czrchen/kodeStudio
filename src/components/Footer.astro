@@ -1,0 +1,40 @@
+---
+import Logo from './Logo.astro';
+import { site, whatsappLink } from '../config';
+const year = new Date().getFullYear();
+---
+<footer class="footer">
+  <div class="container grid">
+    <div class="brand">
+      <Logo light />
+      <p>Custom workflow automation for Malaysian SMEs. Less admin, fewer mistakes, more time for the work that grows your business.</p>
+    </div>
+    <div>
+      <h4>Company</h4>
+      <a href="/#services">Services</a>
+      <a href="/#industries">Industries</a>
+      <a href="/#process">How it works</a>
+      <a href="/#pricing">Pricing</a>
+    </div>
+    <div>
+      <h4>Get in touch</h4>
+      <a href={whatsappLink()} target="_blank" rel="noopener">WhatsApp {site.phoneDisplay}</a>
+      <a href={`mailto:${site.email}`}>{site.email}</a>
+      <a href="/book">Book a free consultation</a>
+    </div>
+  </div>
+  <div class="container bottom">
+    <span>© {year} {site.name}. All rights reserved.</span>
+    <span>Made in {site.location}</span>
+  </div>
+</footer>
+<style>
+  .footer { background: var(--bg-ink); color: #aab3c5; padding: 72px 0 32px; font-size: 15px; }
+  .grid { display: grid; grid-template-columns: 2fr 1fr 1.3fr; gap: 48px; }
+  .brand p { margin-top: 16px; max-width: 380px; line-height: 1.65; }
+  h4 { color: #fff; font-size: 14px; font-weight: 600; margin-bottom: 16px; letter-spacing: 0; }
+  .grid a { display: block; padding: 4px 0; overflow-wrap: anywhere; }
+  .grid a:hover { color: #fff; }
+  .bottom { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 56px; padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 14px; color: #7a849a; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; gap: 32px; } }
+</style>

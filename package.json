@@ -1,0 +1,23 @@
+{
+  "name": "kodestudio",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "db:setup": "node scripts/db-setup.mjs"
+  },
+  "dependencies": {
+    "@astrojs/vercel": "^11.0.11",
+    "@neondatabase/serverless": "^1.2.0",
+    "astro": "^7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@electric-sql/pglite": "^0.5.8",
+    "@types/node": "^26.6.4",
+    "typescript": "^6.0.3"
+  }
+}

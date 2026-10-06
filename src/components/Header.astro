@@ -1,0 +1,72 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+const links = [
+  { href: '/#services', label: 'Services' },
+  { href: '/#industries', label: 'Industries' },
+  { href: '/#process', label: 'How it works' },
+  { href: '/#pricing', label: 'Pricing' },
+  { href: '/#faq', label: 'FAQ' },
+];
+---
+<header class="header" data-header>
+  <div class="container bar">
+    <Logo />
+    <nav class="nav" aria-label="Main">
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+    </nav>
+    <div class="actions">
+      <a class="link" href="/#contact">Contact</a>
+      <a class="btn btn-primary btn-sm" href="/book">Book a free call</a>
+      <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" data-menu-btn>
+        <Icon name="menu" size={22} />
+      </button>
+    </div>
+  </div>
+  <div class="mobile" data-menu hidden>
+    <div class="container">
+      {links.map((l) => <a href={l.href}>{l.label}</a>)}
+      <a href="/#contact">Contact</a>
+      <a class="btn btn-primary" href="/book">Book a free call</a>
+    </div>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector('[data-header]')!;
+  const btn = document.querySelector<HTMLButtonElement>('[data-menu-btn]')!;
+  const menu = document.querySelector<HTMLElement>('[data-menu]')!;
+  const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 8);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  const setOpen = (open: boolean) => {
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+  };
+  btn.addEventListener('click', () => setOpen(Boolean(menu.hidden)));
+  menu.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('a')) setOpen(false);
+  });
+</script>
+
+<style>
+  .header { position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, 0.82); backdrop-filter: saturate(180%) blur(12px); -webkit-backdrop-filter: saturate(180%) blur(12px); border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+  .header:global(.scrolled) { border-bottom-color: var(--line); }
+  .bar { display: flex; align-items: center; justify-content: space-between; height: 68px; gap: 24px; }
+  .nav { display: flex; gap: 28px; font-size: 15px; color: var(--ink-2); }
+  .nav a:hover, .link:hover { color: var(--ink); }
+  .actions { display: flex; align-items: center; gap: 16px; }
+  .link { font-size: 15px; color: var(--ink-2); }
+  .menu-btn { display: none; background: none; border: 0; padding: 6px; margin-right: -6px; color: var(--ink); cursor: pointer; }
+  .mobile { border-top: 1px solid var(--line); background: #fff; }
+  .mobile .container { display: flex; flex-direction: column; padding-top: 12px; padding-bottom: 20px; }
+  .mobile a:not(.btn) { padding: 12px 0; border-bottom: 1px solid var(--line); font-weight: 500; }
+  .mobile .btn { margin-top: 16px; }
+  @media (max-width: 900px) {
+    .nav, .link { display: none; }
+    .menu-btn { display: block; }
+  }
+  @media (max-width: 420px) {
+    .actions .btn { display: none; }
+  }
+</style>

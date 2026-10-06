@@ -1,0 +1,101 @@
+---
+import { industryOptions } from '../config';
+---
+<form class="card-form" data-enquiry novalidate>
+  <div class="row">
+    <div class="field">
+      <label for="cf-name">Your name</label>
+      <input class="input" id="cf-name" name="name" required autocomplete="name" />
+    </div>
+    <div class="field">
+      <label for="cf-company">Company <span class="opt">(optional)</span></label>
+      <input class="input" id="cf-company" name="company" autocomplete="organization" />
+    </div>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label for="cf-email">Work email</label>
+      <input class="input" id="cf-email" name="email" type="email" required autocomplete="email" />
+    </div>
+    <div class="field">
+      <label for="cf-phone">Phone / WhatsApp <span class="opt">(optional)</span></label>
+      <input class="input" id="cf-phone" name="phone" type="tel" autocomplete="tel" placeholder="012-345 6789" />
+    </div>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label for="cf-industry">Industry</label>
+      <select class="input" id="cf-industry" name="industry">
+        <option value="">Select…</option>
+        {industryOptions.map((o) => <option>{o}</option>)}
+      </select>
+    </div>
+    <div class="field">
+      <label for="cf-size">Team size</label>
+      <select class="input" id="cf-size" name="team_size">
+        <option value="">Select…</option>
+        <option>1–10</option>
+        <option>11–30</option>
+        <option>31–75</option>
+        <option>76–200</option>
+        <option>200+</option>
+      </select>
+    </div>
+  </div>
+  <div class="field">
+    <label for="cf-message">What would you like to automate?</label>
+    <textarea class="input" id="cf-message" name="message" required placeholder="e.g. Our leave and claims are done over WhatsApp and Excel, and month-end takes 3 days to reconcile…"></textarea>
+  </div>
+  <div class="hp" aria-hidden="true">
+    <label>Website <input name="website" tabindex="-1" autocomplete="off" /></label>
+  </div>
+  <div class="form-msg" data-msg hidden></div>
+  <button class="btn btn-primary" type="submit">Send enquiry</button>
+  <p class="fine">We reply within one working day. Your details are only used to respond to your enquiry.</p>
+</form>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-enquiry]')!;
+  const msg = form.querySelector<HTMLElement>('[data-msg]')!;
+  const btn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+
+  const show = (text: string, kind: 'error' | 'success') => {
+    msg.textContent = text;
+    msg.className = `form-msg ${kind}`;
+    msg.hidden = false;
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    try {
+      const res = await fetch('/api/enquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(new FormData(form))),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again or WhatsApp us.');
+      form.reset();
+      show("Thanks! We've received your enquiry and will get back to you within one working day.", 'success');
+    } catch (err) {
+      show((err as Error).message || 'Network error. Please try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send enquiry';
+    }
+  });
+</script>
+
+<style>
+  .card-form { display: grid; gap: 18px; padding: 32px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: var(--shadow); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card-form .btn { height: 48px; }
+  .fine { font-size: 13px; color: var(--ink-3); text-align: center; }
+  @media (max-width: 560px) {
+    .card-form { padding: 20px; }
+    .row { grid-template-columns: 1fr; }
+  }
+</style>

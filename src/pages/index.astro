@@ -1,0 +1,608 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+import ContactForm from '../components/ContactForm.astro';
+import { industries, pricing, site, whatsappLink } from '../config';
+
+export const prerender = true;
+
+const tools = ['WhatsApp', 'Google Sheets', 'Excel', 'Gmail', 'Outlook', 'Google Drive', 'Lark', 'Telegram', 'Notion', 'Shopify', 'AI / ChatGPT'];
+
+const pains = [
+  { icon: 'message', title: 'Approvals lost in WhatsApp', text: 'Leave, claims and purchase requests buried in group chats, with no record of who approved what.' },
+  { icon: 'layers', title: 'Copy-paste between files', text: 'The same data typed into three spreadsheets, a system and an email — and mistakes in every one.' },
+  { icon: 'trending', title: 'Leads that go cold', text: 'Enquiries come in from everywhere, and follow-ups depend on someone remembering.' },
+  { icon: 'chart', title: 'Reports that take days', text: 'Every month-end, someone spends hours compiling numbers the boss needed yesterday.' },
+];
+
+const services = [
+  { icon: 'trending', title: 'Sales & CRM', items: ['Capture leads from WhatsApp, forms & ads', 'Auto-assign and follow-up reminders', 'Quotation generation & tracking'] },
+  { icon: 'clipboard', title: 'HR & admin', items: ['Leave & claims with approval flows', 'Receipt photo → AI extracts the details', 'Onboarding checklists & letters'] },
+  { icon: 'shield', title: 'Approvals & finance', items: ['Purchase requests & multi-level approval', 'Payment and collection reminders', 'Expense and petty-cash records'] },
+  { icon: 'cog', title: 'Operations', items: ['Job & task assignment for field teams', 'Low-stock and reorder alerts', 'Order and delivery status updates'] },
+  { icon: 'message', title: 'Customer communication', items: ['Booking confirmations & reminders', 'Status updates over WhatsApp or email', 'Feedback and review requests'] },
+  { icon: 'chart', title: 'Reporting & dashboards', items: ['Live dashboards for management', 'Daily sales summary to your phone', 'Automated month-end reports'] },
+];
+
+const steps = [
+  { title: 'Free consultation', text: 'A 30-minute call to understand how your team works today and where time is being lost.', meta: '30 minutes' },
+  { title: 'Workflow audit & fixed quote', text: 'We map the process, recommend what to automate first and give you a fixed price — no hourly billing.', meta: '2–3 days' },
+  { title: 'Build & test', text: 'We build on your existing tools and test with real scenarios from your business before go-live.', meta: '1–3 weeks' },
+  { title: 'Launch, train & support', text: 'We walk your team through it, fix anything that comes up and stay on call as your business changes.', meta: 'Ongoing' },
+];
+
+const reasons = [
+  { icon: 'zap', title: 'No new app to learn', text: 'We build around WhatsApp, Google Workspace, Excel and the systems your staff already use every day.' },
+  { icon: 'shield', title: 'Fixed, transparent pricing', text: 'You approve a fixed quote before we start. No surprise invoices, no per-user licence creep.' },
+  { icon: 'key', title: 'You own everything', text: 'Workflows, data and accounts stay under your business. Full handover documentation included.' },
+  { icon: 'users', title: 'Local, responsive support', text: 'A Malaysian team that understands how SMEs here operate — and replies on WhatsApp.' },
+];
+
+const faqs = [
+  { q: 'We are a small company. Is automation really for us?', a: 'Yes — small teams usually benefit the most, because every hour saved on admin is an hour back for sales or operations. Most of our projects start with one process that is clearly wasting time each week.' },
+  { q: 'Do we need to buy new software?', a: 'Usually not. We build on the tools you already use, such as WhatsApp, Google Sheets, Excel, Gmail or Outlook. If a paid tool would genuinely help, we will explain the cost and let you decide.' },
+  { q: 'How is pricing decided?', a: 'After a free consultation we scope the workflows and give you a fixed one-time setup price, starting from RM1,500. An optional Care Plan from RM300/month covers maintenance and small improvements.' },
+  { q: 'How long does a project take?', a: 'A Starter project is typically live within 1–2 weeks. Larger Growth or Custom projects are delivered in phases, so you start getting value early.' },
+  { q: 'Is our company data safe?', a: 'Your data stays in accounts your company owns. We only request the access a workflow needs and can sign an NDA before reviewing your processes.' },
+  { q: 'What happens if something breaks or our process changes?', a: 'Every project includes a post-launch fix period. After that, the Care Plan covers monitoring, fixes and tweaks — or you can request changes as one-off jobs.' },
+  { q: 'Our industry is not listed. Can you still help?', a: 'Almost certainly. Approvals, data entry, follow-ups and reporting look similar in every industry. Tell us how your team works and we will show you what can be automated.' },
+];
+---
+
+<Base>
+  <Header />
+  <main>
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-bg" aria-hidden="true"></div>
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <a href="/#industries" class="pill"><span class="dot"></span> Automation for Malaysian SMEs <Icon name="arrow" size={14} /></a>
+          <h1>Automate the busywork.<br /><span class="grad">Grow the business.</span></h1>
+          <p class="lead">
+            We design and build custom automations for sales, HR, approvals and operations — on the tools your team already uses, at a fixed price.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="/book">Book a free consultation <Icon name="arrow" size={16} /></a>
+            <a class="btn btn-ghost" href={whatsappLink()} target="_blank" rel="noopener"><Icon name="whatsapp" size={18} class="wa" /> WhatsApp us</a>
+          </div>
+          <ul class="hero-points">
+            <li><Icon name="check" size={16} /> Fixed quote before we start</li>
+            <li><Icon name="check" size={16} /> Live in as little as 1–2 weeks</li>
+            <li><Icon name="check" size={16} /> No new app for staff to learn</li>
+          </ul>
+        </div>
+
+        <div class="hero-visual" aria-label="Example: an automated expense claim workflow">
+          <div class="flow-card">
+            <div class="flow-head">
+              <div class="dots"><span></span><span></span><span></span></div>
+              <span class="flow-title">Expense claim workflow</span>
+              <span class="live"><span></span>Running</span>
+            </div>
+            <ol class="flow-steps">
+              <li class="done">
+                <span class="node"><Icon name="whatsapp" size={16} /></span>
+                <div><strong>Receipt sent on WhatsApp</strong><small>Aina · Sales · 9:12 AM</small></div>
+                <span class="tag ok">Received</span>
+              </li>
+              <li class="done">
+                <span class="node"><Icon name="sparkles" size={16} /></span>
+                <div><strong>AI reads the receipt</strong><small>RM 86.40 · Fuel · 14 Oct</small></div>
+                <span class="tag ok">Extracted</span>
+              </li>
+              <li class="active">
+                <span class="node"><Icon name="shield" size={16} /></span>
+                <div><strong>Manager approves in one tap</strong><small>Sent to Mr. Tan</small></div>
+                <span class="tag wait">Pending</span>
+              </li>
+              <li>
+                <span class="node"><Icon name="layers" size={16} /></span>
+                <div><strong>Recorded for payroll</strong><small>Claims sheet · Oct 2026</small></div>
+                <span class="tag idle">Queued</span>
+              </li>
+            </ol>
+          </div>
+          <div class="toast">
+            <span class="toast-icon"><Icon name="check" size={16} /></span>
+            <div><strong>Claim #142 approved</strong><small>Staff notified automatically</small></div>
+          </div>
+          <p class="visual-note">Example workflow</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tools -->
+    <section class="tools">
+      <div class="container">
+        <p>Works with the tools your team already uses</p>
+        <ul>{tools.map((t) => <li>{t}</li>)}</ul>
+      </div>
+    </section>
+
+    <!-- Problems -->
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Sound familiar?</span>
+          <h2>Your team is too valuable for repetitive admin.</h2>
+          <p>Most SMEs don't need a big new system. They need the work that already happens every day to run on its own.</p>
+        </div>
+        <div class="pain-grid">
+          {pains.map((p) => (
+            <article class="pain">
+              <span class="icon-box"><Icon name={p.icon} /></span>
+              <h3>{p.title}</h3>
+              <p>{p.text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Services -->
+    <section class="section section-soft" id="services">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Services</span>
+          <h2>Automation across every department.</h2>
+          <p>Start with the process that hurts most, then connect the rest as you grow.</p>
+        </div>
+        <div class="service-grid">
+          {services.map((s) => (
+            <article class="service">
+              <span class="icon-box brand"><Icon name={s.icon} /></span>
+              <h3>{s.title}</h3>
+              <ul>{s.items.map((i) => <li><Icon name="check" size={16} />{i}</li>)}</ul>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Industries -->
+    <section class="section" id="industries">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Industries</span>
+          <h2>Built for how your industry works.</h2>
+          <p>Example workflows we build for Malaysian businesses. Select an industry to see how it flows.</p>
+        </div>
+        <div class="ind">
+          <div class="ind-tabs" role="tablist" aria-label="Industries">
+            {industries.map((ind, i) => (
+              <button
+                type="button"
+                role="tab"
+                id={`tab-${ind.id}`}
+                aria-controls={`panel-${ind.id}`}
+                aria-selected={i === 0 ? 'true' : 'false'}
+                tabindex={i === 0 ? 0 : -1}
+                data-tab
+              >
+                <Icon name={ind.icon} size={18} />
+                {ind.name}
+              </button>
+            ))}
+          </div>
+          <div class="ind-panels">
+            {industries.map((ind, i) => (
+              <div class="ind-panel" role="tabpanel" id={`panel-${ind.id}`} aria-labelledby={`tab-${ind.id}`} hidden={i !== 0}>
+                <div class="ind-panel-head">
+                  <span class="icon-box brand lg"><Icon name={ind.icon} size={24} /></span>
+                  <div>
+                    <span class="example-tag">Example workflow</span>
+                    <h3>{ind.name}</h3>
+                  </div>
+                </div>
+                <ol class="ind-flow">
+                  {ind.flow.map((step, n) => (
+                    <li>
+                      <span class="num">{n + 1}</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p class="ind-text">{ind.example}</p>
+                <a class="btn btn-dark btn-sm" href="/book">Discuss this for my business <Icon name="arrow" size={16} /></a>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p class="ind-more">
+          Retail, logistics, trading, education, beauty, events and more — <a href="/#contact">tell us about your business</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- Process -->
+    <section class="section section-soft" id="process">
+      <div class="container">
+        <div class="section-head center">
+          <span class="eyebrow">How it works</span>
+          <h2>From first call to running automation.</h2>
+          <p>A simple, low-risk process. You know the scope and the price before any work starts.</p>
+        </div>
+        <ol class="steps">
+          {steps.map((s, i) => (
+            <li class="step">
+              <div class="step-top">
+                <span class="step-num">{String(i + 1).padStart(2, '0')}</span>
+                <span class="step-meta"><Icon name="clock" size={14} /> {s.meta}</span>
+              </div>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <!-- Why -->
+    <section class="section">
+      <div class="container why">
+        <div class="section-head">
+          <span class="eyebrow">Why {site.name}</span>
+          <h2>Automation that fits your business — not the other way around.</h2>
+          <p>Off-the-shelf software makes you change how you work. We automate the way your team already works, and make it faster.</p>
+          <a class="btn btn-primary" href="/book" style="margin-top:28px">Book a free consultation <Icon name="arrow" size={16} /></a>
+        </div>
+        <div class="why-grid">
+          {reasons.map((r) => (
+            <article>
+              <span class="icon-box brand"><Icon name={r.icon} /></span>
+              <h3>{r.title}</h3>
+              <p>{r.text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="section section-soft" id="pricing">
+      <div class="container">
+        <div class="section-head center">
+          <span class="eyebrow">Pricing</span>
+          <h2>Simple pricing. Fixed before we start.</h2>
+          <p>A one-time setup fee for the build, plus an optional monthly Care Plan. Final quote depends on scope.</p>
+        </div>
+        <div class="plans">
+          {pricing.plans.map((p) => (
+            <article class:list={['plan', { featured: p.featured }]}>
+              {p.featured && <span class="badge">Most popular</span>}
+              <h3>{p.name}</h3>
+              <p class="plan-desc">{p.description}</p>
+              <div class="price">
+                {p.prefix && <span class="from">{p.prefix}</span>}
+                <span class="amount">{p.price}</span>
+              </div>
+              <p class="price-suffix">{p.suffix}</p>
+              <a class:list={['btn', p.featured ? 'btn-primary' : 'btn-ghost']} href="/book">{p.cta}</a>
+              <ul>{p.features.map((f) => <li><Icon name="check" size={16} />{f}</li>)}</ul>
+            </article>
+          ))}
+        </div>
+        <div class="care">
+          <div class="care-l">
+            <span class="icon-box brand"><Icon name="shield" /></span>
+            <div>
+              <h3>{pricing.care.name}</h3>
+              <p>{pricing.care.description}</p>
+            </div>
+          </div>
+          <div class="care-price"><span class="from">from</span> <strong>{pricing.care.price}</strong><span>{pricing.care.suffix}</span></div>
+        </div>
+        <p class="price-note">All prices in Malaysian Ringgit. Third-party subscriptions (if any) are billed directly to you at cost.</p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="container faq-wrap">
+        <div class="section-head">
+          <span class="eyebrow">FAQ</span>
+          <h2>Questions, answered.</h2>
+          <p>Can't find what you're looking for? <a class="inline-link" href={whatsappLink()} target="_blank" rel="noopener">Message us on WhatsApp</a>.</p>
+        </div>
+        <div class="faq">
+          {faqs.map((f) => (
+            <details>
+              <summary>{f.q}<Icon name="plus" size={18} /></summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA band -->
+    <section class="cta-band">
+      <div class="container cta-inner">
+        <div>
+          <h2>See what you could automate this month.</h2>
+          <p>Book a free 30-minute consultation. You'll leave with at least one idea you can use — whether you work with us or not.</p>
+        </div>
+        <div class="cta-actions">
+          <a class="btn btn-primary" href="/book">Book a free call <Icon name="arrow" size={16} /></a>
+          <a class="btn btn-outline-light" href={whatsappLink()} target="_blank" rel="noopener"><Icon name="whatsapp" size={18} /> WhatsApp</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="section" id="contact">
+      <div class="container contact">
+        <div class="contact-info">
+          <span class="eyebrow">Contact</span>
+          <h2>Tell us about your business.</h2>
+          <p class="sub">Share what's slowing your team down. We'll reply within one working day.</p>
+          <div class="channels">
+            <a class="channel" href={whatsappLink()} target="_blank" rel="noopener">
+              <span class="icon-box wa-box"><Icon name="whatsapp" /></span>
+              <div><strong>WhatsApp</strong><span>{site.phoneDisplay}</span></div>
+              <Icon name="arrow" size={16} class="chev" />
+            </a>
+            <a class="channel" href={`mailto:${site.email}`}>
+              <span class="icon-box brand"><Icon name="mail" /></span>
+              <div><strong>Email</strong><span>{site.email}</span></div>
+              <Icon name="arrow" size={16} class="chev" />
+            </a>
+            <a class="channel" href="/book">
+              <span class="icon-box brand"><Icon name="calendar" /></span>
+              <div><strong>Book a call</strong><span>Free 30-minute consultation</span></div>
+              <Icon name="arrow" size={16} class="chev" />
+            </a>
+          </div>
+        </div>
+        <ContactForm />
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Base>
+
+<script>
+  const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab]'));
+  const select = (tab: HTMLButtonElement, focus = false) => {
+    tabs.forEach((t) => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')!)!.hidden = !on;
+    });
+    if (focus) tab.focus();
+    tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => select(tab));
+    tab.addEventListener('keydown', (e) => {
+      const keys: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
+      if (!(e.key in keys)) return;
+      e.preventDefault();
+      select(tabs[(i + keys[e.key] + tabs.length) % tabs.length], true);
+    });
+  });
+</script>
+
+<style>
+  /* Hero */
+  .hero { position: relative; overflow: hidden; padding: 72px 0 96px; }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: -1;
+    background:
+      radial-gradient(600px 300px at 85% 10%, rgba(47, 91, 255, 0.12), transparent 70%),
+      radial-gradient(500px 300px at 10% 0%, rgba(18, 184, 134, 0.08), transparent 70%),
+      linear-gradient(to bottom, transparent 60%, #fff),
+      linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 56px 56px,
+      linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 56px 56px;
+    mask-image: linear-gradient(to bottom, #000 40%, transparent);
+    opacity: 0.9;
+  }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 64px; align-items: center; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 13px; font-weight: 500; color: var(--ink-2); box-shadow: var(--shadow-sm); }
+  .pill:hover { border-color: var(--line-strong); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  h1 { margin-top: 24px; font-size: clamp(40px, 6vw, 64px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.04; }
+  .grad { background: linear-gradient(90deg, var(--brand) 0%, #6b4dff 55%, #12b886 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { margin-top: 22px; font-size: 19px; line-height: 1.6; color: var(--ink-2); max-width: 540px; }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+  .hero-cta .btn { height: 48px; padding: 0 22px; }
+  :global(.wa) { color: #25d366; }
+  .hero-points { list-style: none; padding: 0; margin: 28px 0 0; display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 14px; color: var(--ink-2); }
+  .hero-points li { display: inline-flex; align-items: center; gap: 6px; }
+  .hero-points :global(svg) { color: var(--accent); }
+
+  .hero-visual { position: relative; padding: 8px 0 40px; }
+  .flow-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-lg); overflow: hidden; }
+  .flow-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: #fbfcfe; }
+  .dots { display: flex; gap: 6px; }
+  .dots span { width: 10px; height: 10px; border-radius: 50%; background: #e1e5ec; }
+  .flow-title { font-size: 14px; font-weight: 600; }
+  .live { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #087f5b; background: var(--accent-soft); padding: 3px 9px; border-radius: 999px; }
+  .live span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.6s infinite; }
+  .flow-steps { list-style: none; margin: 0; padding: 10px 18px 18px; position: relative; }
+  .flow-steps li { position: relative; display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; align-items: center; padding: 14px 0; }
+  .flow-steps li + li::before { content: ''; position: absolute; left: 17px; top: -14px; height: 28px; width: 2px; background: var(--line); }
+  .flow-steps li.done + li::before { background: var(--accent); }
+  .node { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--bg-soft); color: var(--ink-3); border: 1px solid var(--line); position: relative; z-index: 1; }
+  .done .node { background: var(--accent-soft); color: #0c8a63; border-color: #b2f2d6; }
+  .active .node { background: var(--brand-soft); color: var(--brand); border-color: #c5d0ff; box-shadow: 0 0 0 4px rgba(47, 91, 255, 0.1); }
+  .flow-steps strong { display: block; font-size: 14.5px; font-weight: 600; }
+  .flow-steps small { display: block; font-size: 13px; color: var(--ink-3); margin-top: 1px; }
+  .tag { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
+  .tag.ok { background: var(--accent-soft); color: #087f5b; }
+  .tag.wait { background: #fff4e6; color: #c25e00; }
+  .tag.idle { background: var(--bg-soft); color: var(--ink-3); }
+  .toast { position: absolute; right: -16px; bottom: 6px; display: flex; gap: 12px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; box-shadow: var(--shadow-lg); animation: float 5s ease-in-out infinite; }
+  .toast strong { display: block; font-size: 14px; }
+  .toast small { font-size: 12.5px; color: var(--ink-3); }
+  .toast-icon { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; }
+  .visual-note { position: absolute; left: 4px; bottom: 10px; font-size: 12px; color: var(--ink-3); }
+  @keyframes pulse { 50% { opacity: 0.35; } }
+  @keyframes float { 50% { transform: translateY(-6px); } }
+
+  @media (max-width: 960px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+    .toast { right: 8px; }
+  }
+  @media (max-width: 480px) {
+    .hero { padding-top: 48px; }
+    .flow-steps li { grid-template-columns: 36px 1fr; }
+    .tag { display: none; }
+    .toast { position: relative; right: auto; bottom: auto; margin: -18px 12px 0 auto; width: fit-content; }
+    .visual-note { position: static; margin-top: 12px; }
+    .hero-visual { padding-bottom: 0; }
+  }
+
+  /* Tools */
+  .tools { padding: 8px 0 72px; }
+  .tools p { text-align: center; font-size: 14px; color: var(--ink-3); font-weight: 500; }
+  .tools ul { list-style: none; padding: 0; margin: 20px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 12px; }
+  .tools li { font-size: 14px; font-weight: 600; color: var(--ink-2); padding: 8px 16px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
+
+  /* Shared */
+  .icon-box { width: 40px; height: 40px; border-radius: 10px; display: inline-grid; place-items: center; background: var(--bg-soft); color: var(--ink-2); border: 1px solid var(--line); flex-shrink: 0; }
+  .icon-box.brand { background: var(--brand-soft); color: var(--brand); border-color: #dbe2ff; }
+  .icon-box.lg { width: 52px; height: 52px; border-radius: 14px; }
+  .wa-box { background: #e7f9ee; color: #1faa52; border-color: #c3eed4; }
+  h3 { font-size: 18px; font-weight: 620; }
+  .inline-link { color: var(--brand); font-weight: 550; }
+  .inline-link:hover { text-decoration: underline; }
+
+  /* Pains */
+  .pain-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .pain { padding: 28px 24px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+  .pain h3 { margin-top: 20px; }
+  .pain p { margin-top: 8px; font-size: 15px; color: var(--ink-2); }
+  @media (max-width: 960px) { .pain-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .pain-grid { grid-template-columns: 1fr; } }
+
+  /* Services */
+  .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .service { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s; }
+  .service:hover { box-shadow: var(--shadow); transform: translateY(-2px); border-color: var(--line-strong); }
+  .service h3 { margin-top: 20px; }
+  .service ul { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; }
+  .service li { display: flex; gap: 10px; font-size: 15px; color: var(--ink-2); line-height: 1.45; }
+  .service li :global(svg) { color: var(--accent); margin-top: 2px; flex-shrink: 0; }
+  @media (max-width: 960px) { .service-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 620px) { .service-grid { grid-template-columns: 1fr; } }
+
+  /* Industries */
+  .ind { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
+  .ind > * { min-width: 0; }
+  .ind-tabs { display: flex; flex-direction: column; gap: 4px; }
+  .ind-tabs button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 14px; border: 1px solid transparent; border-radius: var(--radius-sm); background: none; font: inherit; font-size: 15px; font-weight: 500; color: var(--ink-2); text-align: left; cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .ind-tabs button :global(svg) { color: var(--ink-3); flex-shrink: 0; }
+  .ind-tabs button:hover { background: var(--bg-soft); color: var(--ink); }
+  .ind-tabs button[aria-selected='true'] { background: #fff; border-color: var(--line); color: var(--ink); box-shadow: var(--shadow-sm); font-weight: 600; }
+  .ind-tabs button[aria-selected='true'] :global(svg) { color: var(--brand); }
+  .ind-panels { background: linear-gradient(180deg, #fbfcff, #fff); border: 1px solid var(--line); border-radius: 18px; padding: 36px; box-shadow: var(--shadow); min-height: 100%; }
+  .ind-panel-head { display: flex; gap: 16px; align-items: center; }
+  .ind-panel-head h3 { font-size: 26px; margin-top: 4px; }
+  .example-tag { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
+  .ind-flow { list-style: none; padding: 0; margin: 32px 0 0; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .ind-flow li { display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 10px; background: #fff; border: 1px solid var(--line); border-radius: 12px; font-size: 15px; font-weight: 550; box-shadow: var(--shadow-sm); position: relative; }
+  .ind-flow li:not(:last-child) { margin-right: 22px; }
+  .ind-flow li:not(:last-child)::after { content: ''; position: absolute; right: -24px; top: 50%; width: 16px; height: 2px; background: var(--line-strong); }
+  .ind-flow li:not(:last-child)::before { content: ''; position: absolute; right: -24px; top: calc(50% - 4px); width: 7px; height: 7px; border-top: 2px solid var(--line-strong); border-right: 2px solid var(--line-strong); transform: translateX(-1px) rotate(45deg); }
+  .num { width: 24px; height: 24px; border-radius: 7px; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .ind-text { margin: 28px 0 28px; font-size: 16.5px; color: var(--ink-2); max-width: 640px; line-height: 1.7; }
+  .ind-more { margin-top: 28px; text-align: center; color: var(--ink-2); }
+  .ind-more a { color: var(--brand); font-weight: 550; }
+  @media (max-width: 900px) {
+    .ind { grid-template-columns: 1fr; }
+    .ind-tabs { flex-direction: row; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+    .ind-tabs::-webkit-scrollbar { display: none; }
+    .ind-tabs button { width: auto; white-space: nowrap; border-color: var(--line); }
+    .ind-panels { padding: 24px; }
+  }
+  @media (max-width: 560px) {
+    .ind-flow { flex-direction: column; align-items: stretch; }
+    .ind-flow li:not(:last-child) { margin-right: 0; margin-bottom: 14px; }
+    .ind-flow li:not(:last-child)::after { right: auto; left: 21px; top: auto; bottom: -15px; width: 2px; height: 14px; }
+    .ind-flow li:not(:last-child)::before { display: none; }
+  }
+
+  /* Steps */
+  .steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; counter-reset: s; }
+  .step { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 24px; position: relative; }
+  .step-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .step-num { font-size: 14px; font-weight: 700; color: var(--brand); background: var(--brand-soft); padding: 4px 10px; border-radius: 8px; }
+  .step-meta { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--ink-3); }
+  .step p { margin-top: 10px; font-size: 15px; color: var(--ink-2); }
+  @media (max-width: 960px) { .steps { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .steps { grid-template-columns: 1fr; } }
+
+  /* Why */
+  .why { display: grid; grid-template-columns: 1fr 1.2fr; gap: 64px; align-items: start; }
+  .why .section-head { margin-bottom: 0; position: sticky; top: 100px; }
+  .why-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .why-grid article { padding: 28px; border: 1px solid var(--line); border-radius: var(--radius); }
+  .why-grid h3 { margin-top: 18px; }
+  .why-grid p { margin-top: 8px; font-size: 15px; color: var(--ink-2); }
+  @media (max-width: 960px) { .why { grid-template-columns: 1fr; gap: 40px; } .why .section-head { position: static; } }
+  @media (max-width: 560px) { .why-grid { grid-template-columns: 1fr; } }
+
+  /* Pricing */
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+  .plan { position: relative; display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 32px 28px; box-shadow: var(--shadow-sm); }
+  .plan.featured { border: 2px solid var(--brand); box-shadow: 0 24px 48px -16px rgba(47, 91, 255, 0.28); }
+  .badge { position: absolute; top: -13px; left: 28px; background: var(--brand); color: #fff; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 999px; }
+  .plan h3 { font-size: 20px; }
+  .plan-desc { margin-top: 8px; color: var(--ink-2); font-size: 15px; min-height: 48px; }
+  .price { margin-top: 24px; display: flex; align-items: baseline; gap: 8px; }
+  .from { font-size: 14px; color: var(--ink-3); }
+  .amount { font-size: 42px; font-weight: 700; letter-spacing: -0.03em; }
+  .price-suffix { font-size: 14px; color: var(--ink-3); margin-top: 2px; }
+  .plan .btn { margin-top: 24px; width: 100%; }
+  .plan ul { list-style: none; padding: 24px 0 0; margin: 24px 0 0; border-top: 1px solid var(--line); display: grid; gap: 12px; }
+  .plan li { display: flex; gap: 10px; font-size: 15px; color: var(--ink-2); line-height: 1.45; }
+  .plan li :global(svg) { color: var(--brand); margin-top: 2px; flex-shrink: 0; }
+  .care { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; gap: 24px; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px 28px; }
+  .care-l { display: flex; gap: 16px; align-items: flex-start; }
+  .care-l p { margin-top: 6px; color: var(--ink-2); font-size: 15px; max-width: 620px; }
+  .care-price { white-space: nowrap; display: flex; align-items: baseline; gap: 6px; color: var(--ink-3); font-size: 14px; }
+  .care-price strong { font-size: 30px; color: var(--ink); letter-spacing: -0.02em; }
+  .price-note { margin-top: 20px; text-align: center; font-size: 14px; color: var(--ink-3); }
+  @media (max-width: 960px) { .plans { grid-template-columns: 1fr; max-width: 520px; margin: 0 auto; } .care { flex-direction: column; align-items: flex-start; max-width: 520px; margin-left: auto; margin-right: auto; } }
+
+  /* FAQ */
+  .faq-wrap { display: grid; grid-template-columns: 1fr 1.5fr; gap: 64px; }
+  .faq { border-top: 1px solid var(--line); }
+  .faq details { border-bottom: 1px solid var(--line); }
+  .faq summary { list-style: none; display: flex; justify-content: space-between; gap: 24px; align-items: center; padding: 22px 0; font-size: 17px; font-weight: 600; cursor: pointer; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary :global(svg) { flex-shrink: 0; color: var(--ink-3); transition: transform 0.2s; }
+  .faq details[open] summary :global(svg) { transform: rotate(45deg); }
+  .faq details p { padding: 0 40px 22px 0; color: var(--ink-2); line-height: 1.7; }
+  @media (max-width: 900px) { .faq-wrap { grid-template-columns: 1fr; gap: 8px; } }
+
+  /* CTA band */
+  .cta-band { background: var(--bg-ink); color: #fff; padding: 80px 0; position: relative; overflow: hidden; }
+  .cta-band::before { content: ''; position: absolute; inset: 0; background: radial-gradient(600px 260px at 90% 0%, rgba(47, 91, 255, 0.35), transparent 70%), radial-gradient(400px 200px at 0% 100%, rgba(18, 184, 134, 0.18), transparent 70%); }
+  .cta-inner { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 40px; }
+  .cta-inner h2 { font-size: clamp(28px, 3.6vw, 40px); }
+  .cta-inner p { margin-top: 14px; color: #aab3c5; font-size: 17px; max-width: 560px; }
+  .cta-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .cta-actions .btn { height: 48px; }
+  .btn-outline-light { border-color: rgba(255, 255, 255, 0.25); color: #fff; }
+  .btn-outline-light:hover { border-color: rgba(255, 255, 255, 0.6); }
+  @media (max-width: 860px) { .cta-inner { flex-direction: column; align-items: flex-start; } }
+
+  /* Contact */
+  .contact { display: grid; grid-template-columns: 1fr 1.25fr; gap: 64px; align-items: start; }
+  .contact h2 { font-size: clamp(30px, 4vw, 44px); }
+  .contact .sub { margin-top: 16px; font-size: 18px; color: var(--ink-2); }
+  .channels { margin-top: 32px; display: grid; gap: 12px; }
+  .channel { display: flex; align-items: center; gap: 16px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); transition: border-color 0.15s, box-shadow 0.15s; }
+  .channel:hover { border-color: var(--line-strong); box-shadow: var(--shadow); }
+  .channel div { display: flex; flex-direction: column; min-width: 0; }
+  .channel strong { font-size: 15px; }
+  .channel span:not(.icon-box) { font-size: 14px; color: var(--ink-3); overflow-wrap: anywhere; }
+  .channel :global(.chev) { margin-left: auto; color: var(--ink-3); flex-shrink: 0; }
+  @media (max-width: 900px) { .contact { grid-template-columns: 1fr; gap: 40px; } }
+</style>

@@ -1,0 +1,260 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+import { booking, industryOptions, site, whatsappLink } from '../config';
+import { availability } from '../lib/slots';
+
+const days = await availability();
+---
+
+<Base title={`Book a free consultation — ${site.name}`} description="Book a free 30-minute automation consultation with KodeStudio.">
+  <Header />
+  <main class="book">
+    <div class="container grid">
+      <aside class="intro">
+        <span class="eyebrow">Free consultation</span>
+        <h1>Book a {booking.durationMinutes}-minute call</h1>
+        <p class="sub">Tell us how your team works today. We'll point out what can be automated and roughly what it would cost — no obligation.</p>
+        <ul class="meta">
+          <li><Icon name="clock" size={18} /> {booking.durationMinutes} minutes</li>
+          <li><Icon name="phone" size={18} /> Google Meet, phone or WhatsApp call</li>
+          <li><Icon name="calendar" size={18} /> Malaysia time (GMT+8)</li>
+        </ul>
+        <div class="expect">
+          <h2>What we'll cover</h2>
+          <ul>
+            <li><Icon name="check" size={16} /> Your current process and where time is lost</li>
+            <li><Icon name="check" size={16} /> 2–3 automation ideas suited to your business</li>
+            <li><Icon name="check" size={16} /> Suggested next step and price range</li>
+          </ul>
+        </div>
+        <p class="alt">Prefer to chat first? <a href={whatsappLink('Hi KodeStudio, I would like to arrange a consultation.')} target="_blank" rel="noopener">WhatsApp {site.phoneDisplay}</a></p>
+      </aside>
+
+      <section class="panel" data-booker>
+        <div data-step="pick">
+          <h2 class="step-title"><span>1</span> Choose a date</h2>
+          {days.length === 0 ? (
+            <p class="empty">No slots are open right now. Please <a href={whatsappLink()} target="_blank" rel="noopener">WhatsApp us</a> to arrange a time.</p>
+          ) : (
+            <>
+              <div class="dates" role="listbox" aria-label="Available dates" data-dates>
+                {days.map((d, i) => (
+                  <button type="button" class="date" role="option" aria-selected={i === 0 ? 'true' : 'false'} data-date={d.date}>
+                    <span class="wd">{d.weekday}</span>
+                    <span class="dm">{d.dayMonth}</span>
+                  </button>
+                ))}
+              </div>
+              <h2 class="step-title"><span>2</span> Choose a time</h2>
+              <div class="times" data-times></div>
+            </>
+          )}
+        </div>
+
+        <form data-step="details" hidden novalidate>
+          <button type="button" class="back" data-back><Icon name="arrow" size={16} class="flip" /> Change time</button>
+          <div class="chosen">
+            <Icon name="calendar" size={20} />
+            <div><strong data-chosen-date></strong><span data-chosen-time></span></div>
+          </div>
+          <h2 class="step-title"><span>3</span> Your details</h2>
+          <div class="row">
+            <div class="field">
+              <label for="b-name">Your name</label>
+              <input class="input" id="b-name" name="name" required autocomplete="name" />
+            </div>
+            <div class="field">
+              <label for="b-company">Company <span class="opt">(optional)</span></label>
+              <input class="input" id="b-company" name="company" autocomplete="organization" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="b-email">Email</label>
+              <input class="input" id="b-email" name="email" type="email" required autocomplete="email" />
+            </div>
+            <div class="field">
+              <label for="b-phone">Phone / WhatsApp</label>
+              <input class="input" id="b-phone" name="phone" type="tel" required autocomplete="tel" placeholder="012-345 6789" pattern="[+\d][\d\s\-]{6,19}" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="b-industry">Industry</label>
+            <select class="input" id="b-industry" name="industry">
+              <option value="">Select…</option>
+              {industryOptions.map((o) => <option>{o}</option>)}
+            </select>
+          </div>
+          <div class="field">
+            <label for="b-topic">What would you like to discuss? <span class="opt">(optional)</span></label>
+            <textarea class="input" id="b-topic" name="topic" placeholder="e.g. Automating leave and claims approval for 25 staff"></textarea>
+          </div>
+          <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off" /></label></div>
+          <div class="form-msg" data-msg hidden></div>
+          <button class="btn btn-primary submit" type="submit">Confirm booking</button>
+        </form>
+
+        <div class="done" data-step="done" hidden>
+          <span class="done-icon"><Icon name="check" size={28} /></span>
+          <h2>You're booked!</h2>
+          <p><strong data-done-when></strong></p>
+          <p class="done-sub">We'll contact you before the call to confirm how you'd like to meet. Need to reschedule? Just WhatsApp us.</p>
+          <div class="done-actions">
+            <a class="btn btn-ghost" href="/">Back to home</a>
+            <a class="btn btn-primary" href={whatsappLink('Hi KodeStudio, I just booked a consultation.')} target="_blank" rel="noopener"><Icon name="whatsapp" size={18} /> WhatsApp us</a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <Footer />
+  <script type="application/json" id="slots-data" set:html={JSON.stringify(days)} />
+</Base>
+
+<script>
+  type Day = { date: string; slots: { iso: string; time: string }[] };
+  const days: Day[] = JSON.parse(document.getElementById('slots-data')!.textContent || '[]');
+  const root = document.querySelector<HTMLElement>('[data-booker]')!;
+  const steps = {
+    pick: root.querySelector<HTMLElement>('[data-step=pick]')!,
+    details: root.querySelector<HTMLFormElement>('[data-step=details]')!,
+    done: root.querySelector<HTMLElement>('[data-step=done]')!,
+  };
+  const timesEl = root.querySelector<HTMLElement>('[data-times]');
+  const dateBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-date]'));
+  const form = steps.details;
+  const msg = form.querySelector<HTMLElement>('[data-msg]')!;
+  const submit = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+
+  let current: Day | undefined = days[0];
+  let chosen: { iso: string; time: string } | undefined;
+
+  const longDate = (date: string) =>
+    new Date(`${date}T12:00:00Z`).toLocaleDateString('en-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+  const show = (name: keyof typeof steps) => {
+    (Object.keys(steps) as (keyof typeof steps)[]).forEach((k) => (steps[k].hidden = k !== name));
+    root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const renderTimes = () => {
+    if (!timesEl || !current) return;
+    timesEl.innerHTML = '';
+    current.slots.forEach((s) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'time';
+      b.textContent = s.time;
+      b.addEventListener('click', () => {
+        chosen = s;
+        form.querySelector('[data-chosen-date]')!.textContent = longDate(current!.date);
+        form.querySelector('[data-chosen-time]')!.textContent = `${s.time} · 30 minutes · Malaysia time`;
+        msg.hidden = true;
+        show('details');
+        form.querySelector<HTMLInputElement>('#b-name')!.focus({ preventScroll: true });
+      });
+      timesEl.appendChild(b);
+    });
+  };
+
+  dateBtns.forEach((btn) =>
+    btn.addEventListener('click', () => {
+      dateBtns.forEach((b) => b.setAttribute('aria-selected', String(b === btn)));
+      current = days.find((d) => d.date === btn.dataset.date);
+      renderTimes();
+    }),
+  );
+  renderTimes();
+
+  form.querySelector('[data-back]')!.addEventListener('click', () => show('pick'));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.reportValidity() || !chosen || !current) return;
+    submit.disabled = true;
+    submit.textContent = 'Booking…';
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...Object.fromEntries(new FormData(form)), slot: chosen.iso }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 409) {
+          current.slots = current.slots.filter((s) => s.iso !== chosen!.iso);
+          renderTimes();
+        }
+        throw new Error(data.error || 'Something went wrong. Please try again.');
+      }
+      root.querySelector('[data-done-when]')!.textContent = `${longDate(current.date)} at ${chosen.time} (Malaysia time)`;
+      show('done');
+    } catch (err) {
+      msg.textContent = (err as Error).message || 'Network error. Please try again.';
+      msg.className = 'form-msg error';
+      msg.hidden = false;
+    } finally {
+      submit.disabled = false;
+      submit.textContent = 'Confirm booking';
+    }
+  });
+</script>
+
+<style>
+  .book { background: var(--bg-soft); border-bottom: 1px solid var(--line); padding: 64px 0 96px; }
+  .grid { display: grid; grid-template-columns: 0.9fr 1.3fr; gap: 56px; align-items: start; }
+  .grid > * { min-width: 0; }
+  h1 { font-size: clamp(32px, 4vw, 44px); }
+  .sub { margin-top: 16px; font-size: 17px; color: var(--ink-2); }
+  .meta { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 12px; color: var(--ink-2); font-size: 15px; }
+  .meta li { display: flex; gap: 10px; align-items: center; }
+  .meta :global(svg) { color: var(--brand); }
+  .expect { margin-top: 32px; padding: 24px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
+  .expect h2 { font-size: 16px; }
+  .expect ul { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 10px; font-size: 15px; color: var(--ink-2); }
+  .expect li { display: flex; gap: 10px; }
+  .expect :global(svg) { color: var(--accent); margin-top: 3px; flex-shrink: 0; }
+  .alt { margin-top: 24px; font-size: 15px; color: var(--ink-2); }
+  .alt a, .empty a { color: var(--brand); font-weight: 550; }
+
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 32px; box-shadow: var(--shadow); scroll-margin-top: 90px; }
+  .step-title { display: flex; align-items: center; gap: 10px; font-size: 17px; margin: 0 0 16px; }
+  .step-title span { width: 26px; height: 26px; border-radius: 8px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+  .dates { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 12px; margin-bottom: 20px; scrollbar-width: thin; }
+  .date { flex: 0 0 auto; width: 76px; padding: 12px 0; border: 1px solid var(--line-strong); border-radius: 12px; background: #fff; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: border-color 0.15s, background 0.15s; }
+  .date:hover { border-color: var(--brand); }
+  .date[aria-selected='true'] { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .wd { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.75; }
+  .dm { font-size: 15px; font-weight: 600; }
+  .times { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+  .times :global(.time) { height: 44px; border: 1px solid var(--line-strong); border-radius: 10px; background: #fff; font: inherit; font-size: 15px; font-weight: 550; color: var(--brand); cursor: pointer; transition: all 0.15s; }
+  .times :global(.time:hover) { border-color: var(--brand); background: var(--brand-soft); }
+  .empty { color: var(--ink-2); }
+
+  form { display: grid; gap: 18px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .back { justify-self: start; display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 0; font: inherit; font-size: 14px; color: var(--ink-2); cursor: pointer; }
+  .back:hover { color: var(--ink); }
+  .back :global(.flip) { transform: rotate(180deg); }
+  .chosen { display: flex; gap: 14px; align-items: center; padding: 16px 18px; background: var(--brand-soft); border: 1px solid #dbe2ff; border-radius: 12px; color: var(--brand); }
+  .chosen div { display: flex; flex-direction: column; color: var(--ink); }
+  .chosen span { font-size: 14px; color: var(--ink-2); }
+  .submit { height: 48px; }
+
+  .done { text-align: center; padding: 24px 0; }
+  .done-icon { width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; box-shadow: 0 0 0 8px var(--accent-soft); }
+  .done h2 { font-size: 28px; }
+  .done p { margin-top: 12px; }
+  .done-sub { color: var(--ink-2); max-width: 420px; margin-left: auto; margin-right: auto; }
+  .done-actions { margin-top: 28px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; gap: 40px; } }
+  @media (max-width: 560px) {
+    .book { padding-top: 40px; }
+    .panel { padding: 20px; }
+    .row { grid-template-columns: 1fr; }
+  }
+</style>
