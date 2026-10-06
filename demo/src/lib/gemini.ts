@@ -44,7 +44,7 @@ export const geminiConfigured = () => Boolean(GEMINI_API_KEY);
 
 export async function readReceipt(mimeType: string, base64: string): Promise<Extracted> {
   if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
-  const model = GEMINI_MODEL || 'gemini-2.5-flash';
+  const model = GEMINI_MODEL || 'gemini-3.8-flash';
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
