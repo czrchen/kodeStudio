@@ -44,8 +44,8 @@ export const geminiConfigured = () => Boolean(GEMINI_API_KEY);
 
 export async function readReceipt(mimeType: string, base64: string): Promise<Extracted> {
   if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
-  const preferred = GEMINI_MODEL || 'gemini-3.8-flash';
-  const models = [preferred, preferred, 'gemini-3.7-flash', 'gemini-3.5-flash'];
+  const preferred = GEMINI_MODEL || 'gemini-flash-lite-latest';
+  const models = [preferred, preferred, 'gemini-3.8-flash', 'gemini-3.7-flash'];
   let data: any;
   let lastError = 'Gemini request failed';
 
