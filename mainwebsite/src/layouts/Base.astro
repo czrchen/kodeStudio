@@ -9,11 +9,12 @@ interface Props {
 }
 const defaultDescription = 'KodeSME builds custom workflow automation for Malaysian SMEs, including WhatsApp automation, Google Sheets, Excel, AI document processing and approval workflows.';
 const {
-  title = `Workflow Automation Malaysia for SMEs | ${site.name}`,
+  title = `${site.name} | Workflow Automation Malaysia for SMEs`,
   description = defaultDescription,
   noindex = false,
 } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site);
+const pathname = Astro.url.pathname === '/' ? '/' : Astro.url.pathname.replace(/\/+$/, '');
+const canonical = new URL(pathname, Astro.site);
 const structuredData = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -48,7 +49,7 @@ const structuredData = {
         'CRM automation',
       ],
     },
-    ...(Astro.url.pathname === '/'
+    ...(pathname === '/'
       ? [{
           '@type': 'Service',
           '@id': `${site.url}/#automation-service`,
@@ -58,6 +59,18 @@ const structuredData = {
           url: site.url,
           provider: { '@id': `${site.url}/#organization` },
           areaServed: { '@type': 'Country', name: 'Malaysia' },
+        }]
+      : []),
+    ...(pathname === '/about'
+      ? [{
+          '@type': 'AboutPage',
+          '@id': `${site.url}/about#webpage`,
+          url: `${site.url}/about`,
+          name: `About ${site.name}`,
+          description: `Learn how ${site.name} builds practical workflow automation for Malaysian SMEs.`,
+          isPartOf: { '@id': `${site.url}/#website` },
+          about: { '@id': `${site.url}/#organization` },
+          inLanguage: 'en-MY',
         }]
       : []),
   ],

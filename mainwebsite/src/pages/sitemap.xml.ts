@@ -4,6 +4,7 @@ export const prerender = true;
 
 const pages = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },
+  { path: '/about', priority: '0.8', changefreq: 'monthly' },
   { path: '/book', priority: '0.8', changefreq: 'weekly' },
   { path: '/privacy', priority: '0.3', changefreq: 'yearly' },
 ];
